@@ -1,0 +1,196 @@
+@model IEnumerable<WebGoiY.Models.Cart>
+
+@{
+    // Ép kiểu an toàn bằng toán tử 'as', nếu null sẽ tự động trả về list rỗng thay vì làm sập trang
+    var cartItems = ViewBag.CartItems as List<WebGoiY.Models.Cart> ?? new List<WebGoiY.Models.Cart>();
+    var recommendations = ViewBag.Recommendations as List<WebGoiY.Models.Product> ?? new List<WebGoiY.Models.Product>();
+    double totalPrice = ViewBag.TotalPrice != null ? (double)ViewBag.TotalPrice : 0;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h4 class="fw-bold text-dark"><i class="fa-solid fa-shopping-cart me-2 text-brand"></i>Your Shopping Cart</h4>
+            <hr class="opacity-10">
+        </div>
+
+        <!-- TÌNH HUỐNG 1: GIỎ HÀNG TRỐNG -->
+        @if (!cartItems.Any())
+        {
+            <div class="col-12 text-center py-5 bg-white rounded shadow-sm border">
+                <i class="fa-solid fa-basket-shopping text-muted mb-3" style="font-size: 60px;"></i>
+                <h5 class="text-secondary fw-bold">Your cart is currently empty.</h5>
+                <p class="text-muted small">Look around the shop to find great products to add!</p>
+                <a href="/Product/ShowShopPage" class="btn btn-dark px-4 mt-2 fw-bold">RETURN TO SHOP</a>
+            </div>
+        }
+        else
+        {
+            <!-- TÌNH HUỐNG 2: CÓ SẢN PHẨM TRONG GIỎ -->
+            <!-- Bảng liệt kê sản phẩm bên trái -->
+            <div class="col-lg-8">
+                <div class="bg-white p-3 rounded shadow-sm border mb-3">
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle m-0">
+                            <thead class="border-bottom small text-muted">
+                                <tr>
+                                    <th scope="col" style="width: 45%;">Product Details</th>
+                                    <th scope="col" class="text-center">Price</th>
+                                    <th scope="col" class="text-center" style="width: 20%;">Quantity</th>
+                                    <th scope="col" class="text-end">Total</th>
+                                    <th scope="col" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in cartItems)
+                                {
+                                    // Kiểm tra chống sập nếu lỡ như dữ liệu Product bên trong bị null
+                                    if (item.Product == null) continue;
+
+                                    <tr class="border-bottom-dashed">
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <img src="@(!string.IsNullOrEmpty(item.Product.ImagePath) ? item.Product.ImagePath : "/images/default_product.png")"
+                                                     class="rounded bg-light border object-fit-cover" style="width: 60px; height: 60px;" alt="Item Image">
+                                                <div class="text-truncate" style="max-width: 220px;">
+                                                    <h6 class="text-dark fw-bold small text-truncate mb-0">@item.Product.ProductName</h6>
+                                                    <span class="text-muted text-uppercase" style="font-size: 10px;">SKU: <span>@item.ProductId</span></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center small fw-bold text-secondary">@item.Product.Price.ToString("N0") £</td>
+
+                                        <!-- Ô ĐIỀU CHỈNH SỐ LƯỢNG (Đồng bộ dẫn về hàm cập nhật) -->
+                                        <td class="text-center">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <div class="input-group input-group-sm" style="max-width: 100px;">
+                                                    <!-- Gọi hàm JS handleUpdateQuantityAsync khi thay đổi số lượng -->
+                                                    <input type="number" 
+                                                        value="@item.Quantity" 
+                                                        min="1" 
+                                                        onchange="handleUpdateQuantityAsync('@item.ProductId', this.value, this)" 
+                                                        class="form-control text-center fw-bold border-secondary-subtle">
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td class="text-end text-brand fw-bold small">@item.Amount.ToString("N0") £</td>
+                                        <td class="text-center">
+                                            <!-- Khớp chính xác route /cart/remove/{id} viết thường toàn bộ -->
+                                            <a href="/cart/remove/@item.ProductId" class="text-danger p-1">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- NÚT QUAY LẠI CHỌN MÓN KHI CÓ SẢN PHẨM TRONG GIỎ -->
+                <div class="mt-3">
+                    <a href="/Product/ShowShopPage" class="btn btn-outline-dark fw-bold px-4 small" style="font-size: 13px;">
+                        <i class="fa-solid fa-arrow-left-long me-2"></i> CONTINUE SHOPPING
+                    </a>
+                </div>
+            </div>
+
+            <!-- Khối tổng tiền đặt hàng bên phải -->
+            <div class="col-lg-4">
+                <div class="bg-white p-4 rounded shadow-sm border position-sticky" style="top: 20px;">
+                    <h5 class="fw-bold text-dark mb-4">Order Summary</h5>
+                    <div class="d-flex justify-content-between mb-2 small text-secondary">
+                        <span>Subtotal</span>
+                        <span>@totalPrice.ToString("N0") £</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 small text-secondary">
+                        <span>Shipping</span>
+                        <span class="text-success fw-bold">FREE</span>
+                    </div>
+                    <hr class="opacity-10">
+                    <div class="d-flex justify-content-between align-items-baseline mb-4">
+                        <span class="fw-bold text-dark">Grand Total</span>
+                        <h3 class="text-brand fw-bold mb-0">@totalPrice.ToString("N0") £</h3>
+                    </div>
+                    <a href="/Checkout" class="btn btn-dark btn-lg w-100 py-3 fw-bold small" style="font-size: 14px; letter-spacing: 1px; display: inline-block; text-align: center;">
+                        PROCEED TO CHECKOUT <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ========================================================================= -->
+    <!--   KHỐI AI RECOMMENDATIONS ĐỘC LẬP DẠNG LƯỚI (GRID) -->
+    <!-- ========================================================================= -->
+    @if (recommendations.Any())
+    {
+        <div class="container mt-5 pt-3">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fa-solid fa-wand-magic-sparkles text-brand fs-4"></i>
+                        <h4 class="fw-bold text-dark m-0">Frequently Bought Together</h4>
+                    </div>
+                    <p class="text-muted small">Smart recommendations based on your current items using AI Association Rules</p>
+                    <hr class="m-0 mt-2 opacity-10">
+                </div>
+            </div>
+
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="ai-recs-grid">
+                @for (int i = 0; i < recommendations.Count; i++)
+                {
+                    var rec = recommendations[i];
+                    var isHiddenClass = i >= 4 ? "d-none" : "";
+
+                    <div class="col rec-card-item @isHiddenClass" data-index="@i">
+                        <div class="card h-100 shadow-sm border-0 transition-all bg-white position-relative" style="border-radius: 12px; overflow: hidden;">
+                            <!-- Vùng ảnh sản phẩm -->
+                            <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
+                                <a href="/Product/Detail?id=@rec.ProductId" class="d-block h-100">
+                                    <img src="@(!string.IsNullOrEmpty(rec.ImagePath) ? rec.ImagePath : "https://placehold.co/300x300/e9ecef/495057?text=AI+Choice")"
+                                         class="w-100 h-100 object-fit-cover" alt="Recommended Item">
+                                </a>
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge @(rec.IsHot == 1 ? "bg-danger" : "bg-brand")">
+                                        @(rec.IsHot == 1 ? "HOT" : "AI Bundle")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Thân thẻ thông tin -->
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div class="mb-2">
+                                    <a href="/Product/Detail?id=@rec.ProductId" class="text-decoration-none">
+                                        <h6 class="text-truncate text-dark small fw-bold mb-1">@rec.ProductName</h6>
+                                    </a>
+                                    <span class="text-brand fw-bold">@rec.Price.ToString("N0") £</span>
+                                </div>
+
+                                <button class="btn btn-outline-dark btn-sm w-100 mt-auto fw-bold"
+                                        data-id="@rec.ProductId"
+                                        onclick="handleAddToCartWithDataAttr(this)"
+                                        style="font-size: 11px; border-radius: 6px; padding: 6px 0;">
+                                    <i class="fa-solid fa-cart-plus me-1"></i> ADD TO CART
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- NÚT SEE MORE -->
+            @if (recommendations.Count > 4)
+            {
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <button id="btnSeeMoreRecs" onclick="handleLoadMoreRecommendations()" class="btn btn-outline-dark px-5 py-2.5 fw-bold" style="border-radius: 30px; font-size: 13px; letter-spacing: 0.5px;">
+                            SEE MORE RECS <i class="fa-solid fa-chevron-down ms-1" style="font-size: 11px;"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

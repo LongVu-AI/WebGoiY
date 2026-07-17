@@ -1,0 +1,86 @@
+<div class="container my-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="bg-white p-5 rounded shadow-sm border">
+                <!-- Tiêu đề Form -->
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-dark">CREATE ACCOUNT</h3>
+                    <p class="text-muted small">Join us to experience smart shopping</p>
+                </div>
+
+                <!-- KHỐI HIỂN THỊ THÔNG BÁO LỖI -->
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger py-2 small border-0 rounded mb-3 text-center" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> <span>@ViewBag.Error</span>
+                    </div>
+                }
+
+                <!-- Form gửi dữ liệu Đăng Ký -->
+                <form action="/Auth/HandleRegister" method="post">
+                    <!-- Full Name -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-id-card small"></i></span>
+                            <!-- Đã sửa: name="fullName" trùng khớp tham số Controller -->
+                            <input type="text" name="fullName" class="form-control border-start-0 ps-0" placeholder="e.g. Vu Long">
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope small"></i></span>
+                            <!-- Đã sửa: name="email" trùng khớp tham số Controller -->
+                            <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="name@example.com">
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Username *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user small"></i></span>
+                            <!-- Đã sửa: đổi thành name="userName" (chữ N viết hoa giống tham số Controller) -->
+                            <input type="text" name="userName" required class="form-control border-start-0 ps-0" placeholder="Choose a unique username">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Password *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock small"></i></span>
+                            <!-- Đã sửa: đổi thành name="passWord" (chữ W viết hoa giống tham số Controller) -->
+                            <input type="password" name="passWord" required class="form-control border-start-0 ps-0" placeholder="Create a strong password">
+                        </div>
+                    </div>
+
+                    <!-- Ô NHẬP LẠI MẬT KHẨU (CONFIRM PASSWORD) -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">Confirm Password *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-shield-halved small"></i></span>
+                             
+                            <input type="password" name="confirmPass" required class="form-control border-start-0 ps-0" placeholder="Repeat your password">
+                        </div>
+                    </div>
+
+                    <!-- Nút Đăng Ký -->
+                    <button type="submit" class="btn btn-brand btn-lg w-100 py-2.5 fw-bold small mb-3" style="font-size: 14px; letter-spacing: 0.5px;">
+                        REGISTER NOW <i class="fa-solid fa-user-plus ms-2"></i>
+                    </button>
+
+                    <!-- Link quay lại Đăng Nhập -->
+                     
+                    <div class="text-center mt-3 small">
+                        <span class="text-muted">Already have an account?</span>
+                        <a href="/Auth/Login" class="text-brand text-decoration-none fw-bold ms-1 hover-brand">Log in here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

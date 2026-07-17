@@ -1,0 +1,164 @@
+@using Microsoft.AspNetCore.Http
+@using WebGoiY.Helpers
+@{
+    ViewData["Title"] = "Secure Checkout";
+    
+    // Đọc thông tin User từ Session để tự động điền (Auto-fill) vào form
+    var loggedInUser = Context.Session.GetObjectFromJson<WebGoiY.Models.User>("loggedInUser");
+    
+    // Hứng danh sách sản phẩm và tổng tiền được truyền từ CheckoutController qua ViewBag
+    var cartItems = ViewBag.CartItems as List<WebGoiY.Models.Cart>;
+    double totalPrice = ViewBag.TotalPrice ?? 0;
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <!-- TIÊU ĐỀ TRANG CHÍNH -->
+        <div class="col-12 mb-4">
+            <h4 class="fw-bold text-dark">
+                <i class="fa-solid fa-credit-card me-2 text-brand"></i>Secure Checkout
+            </h4>
+            <hr class="opacity-10">
+        </div>
+
+        <!-- CỘT BÊN TRÁI: FORM NHẬP THÔNG TIN GIAO HÀNG -->
+        <div class="col-lg-7 mb-4">
+            <div class="bg-white p-4 rounded shadow-sm border">
+                <h5 class="fw-bold text-dark mb-4">
+                    <i class="fa-solid fa-truck-fast me-2 text-secondary"></i>Shipping & Billing Details
+                </h5>
+
+                <!-- Đã sửa: Action trỏ về đúng hàm Post của C# -->
+                <form action="/Checkout/PlaceOrder" method="post">
+                    <div class="row g-3">
+                        <!-- Tên người nhận (Tự động điền nếu có Session) -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Recipient's Full Name *</label>
+                            <input type="text" name="recipientName" required class="form-control"
+                                   value="@(loggedInUser != null ? loggedInUser.FullName : "")"
+                                   placeholder="e.g. Vu Long">
+                        </div>
+
+                        <!-- Số điện thoại nhận hàng -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Phone Number *</label>
+                            <input type="tel" name="phoneNumber" required class="form-control"
+                                   value="@(loggedInUser != null ? loggedInUser.Phone : "")"
+                                   placeholder="e.g. 0901234567">
+                        </div>
+
+                        <!-- Địa chỉ Email -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Email Address (Optional)</label>
+                            <input type="email" name="email" class="form-control"
+                                   value="@(loggedInUser != null ? loggedInUser.Email : "")"
+                                   placeholder="name@example.com">
+                        </div>
+
+                        <!-- Địa chỉ nhận hàng -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Full Delivery Address *</label>
+                            <textarea name="shippingAddress" required class="form-control" rows="3"
+                                      placeholder="Apartment number, street name, ward, district, city...">@(loggedInUser != null ? loggedInUser.Address : "")</textarea>
+                        </div>
+
+                        <!-- Ghi chú đơn hàng -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Order Notes (Optional)</label>
+                            <textarea name="orderNotes" class="form-control" rows="2" placeholder="Notes about your delivery, e.g. special notes for delivery."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI PHƯƠNG THỨC THANH TOÁN (PAYMENT METHOD) -->
+                    <h5 class="fw-bold text-dark mt-4 pt-2 mb-3">
+                        <i class="fa-solid fa-wallet me-2 text-secondary"></i>Payment Method
+                    </h5>
+                    <div class="d-flex flex-column gap-2 mb-4">
+                        <!-- Tùy chọn 1: COD -->
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check m-0">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="paymentCOD" value="COD" checked>
+                                <label class="form-check-label fw-bold small text-dark" for="paymentCOD">
+                                    <i class="fa-solid fa-money-bill-wave text-success me-2"></i> Cash on Delivery (COD)
+                                </label>
+                                <p class="text-muted small m-0 ps-4 mt-1">Pay with cash upon delivery to your doorstep.</p>
+                            </div>
+                        </div>
+
+                        <!-- Tùy chọn 2: BANK TRANSFER -->
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check m-0">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="paymentBank" value="BANK_TRANSFER">
+                                <label class="form-check-label fw-bold small text-dark" for="paymentBank">
+                                    <i class="fa-solid fa-building-columns text-primary me-2"></i> Bank Transfer
+                                </label>
+                                <p class="text-muted small m-0 ps-4 mt-1">Transfer directly to our bank account. Order will ship after clearance.</p>
+                            </div>
+                        </div>
+
+                        <!-- Tùy chọn 3: VNPAY -->
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check m-0">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="paymentVNPAY" value="VNPAY">
+                                <label class="form-check-label fw-bold small text-dark" for="paymentVNPAY">
+                                    <i class="fa-solid fa-qrcode text-danger me-2"></i> VNPay Wallet / QR Code
+                                </label>
+                                <p class="text-muted small m-0 ps-4 mt-1">Pay instantly via VNPay gateway using your mobile banking app.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nút chốt đơn -->
+                    <button type="submit" class="btn btn-dark btn-lg w-100 py-3 fw-bold small mt-2" style="font-size: 14px; letter-spacing: 1px;">
+                        PLACE ORDER <i class="fa-solid fa-circle-check ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- CỘT BÊN PHẢI: TÓM TẮT ĐƠN HÀNG -->
+        <div class="col-lg-5">
+            <div class="bg-white p-4 rounded shadow-sm border position-sticky" style="top: 20px;">
+                <h5 class="fw-bold text-dark mb-4">Your Order</h5>
+
+                <!-- Danh sách sản phẩm thu nhỏ -->
+                <div class="mb-4" style="max-height: 320px; overflow-y: auto;">
+                    @if (cartItems != null)
+                    {
+                        foreach (var item in cartItems)
+                        {
+                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom border-light">
+                                <div class="d-flex align-items-center gap-3 text-truncate" style="max-width: 75%;">
+                                     
+                                    <img src="@(item.Product != null && !string.IsNullOrEmpty(item.Product.ImagePath) ? item.Product.ImagePath : "/images/default_product.png")"
+                                         class="rounded bg-light border object-fit-cover" style="width: 50px; height: 50px;" alt="Item Image">
+                                    <div class="text-truncate">
+                                        <h6 class="text-dark fw-bold small text-truncate mb-0">@(item.Product != null ? item.Product.ProductName : "Product")</h6>
+                                        <span class="text-muted small">Qty: @item.Quantity</span>
+                                    </div>
+                                </div>
+                                <!-- Định dạng tiền tệ dạng số nguyên mượt mà của C# -->
+                                <span class="fw-bold small text-secondary">@item.Amount.ToString("N0") £</span>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Tính toán bảng giá -->
+                <div class="d-flex justify-content-between mb-2 small text-secondary">
+                    <span>Subtotal</span>
+                    <span>@totalPrice.ToString("N0") £</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 small text-secondary">
+                    <span>Shipping</span>
+                    <span class="text-success fw-bold">FREE</span>
+                </div>
+                <hr class="opacity-10">
+                <div class="d-flex justify-content-between align-items-baseline mb-2">
+                    <span class="fw-bold text-dark">Grand Total</span>
+                    <h3 class="text-brand fw-bold mb-0">@totalPrice.ToString("N0") £</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

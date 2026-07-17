@@ -1,0 +1,84 @@
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="bg-white p-5 rounded shadow-sm border">
+                <!-- Tiêu đề và Icon đại diện -->
+                <div class="text-center mb-4">
+                    <div class="text-brand mb-2" style="font-size: 50px;">
+                        <i class="fa-solid fa-circle-user"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">ACCOUNT PROFILE</h4>y
+                    <p class="text-muted small">Manage your personal information and default shipping details</p>
+                </div>
+
+                <!-- Khối hiển thị thông báo cập nhật thành công bằng C# Razor -->
+                @if (ViewBag.SuccessMessage != null)
+                {
+                    <div class="alert alert-success py-2 small border-0 rounded mb-4 text-center" role="alert">
+                        <i class="fa-solid fa-circle-check me-2"></i> <span>@ViewBag.SuccessMessage</span>
+                    </div>
+                }
+
+                <!--  Đường dẫn gửi Form về Controller --->
+                <form action="/profile/update" method="post">
+                    <div class="row">
+                        <!-- Username (Readonly) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-secondary">Username (Account)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user small"></i></span>
+                                <!-- 🌟 Lấy dữ liệu từ ViewBag.User ra ô input -->
+                                <input type="text" value="@ViewBag.User?.Username" class="form-control border-start-0 ps-0 bg-light" readonly style="cursor: not-allowed;">
+                            </div>
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-secondary">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-signature small"></i></span>
+                                <input type="text" name="fullName" value="@ViewBag.User?.FullName" class="form-control border-start-0 ps-0" placeholder="Enter your full name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Email Address -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-secondary">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope small"></i></span>
+                                <input type="email" name="email" value="@ViewBag.User?.Email" class="form-control border-start-0 ps-0" placeholder="name@example.com">
+                            </div>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-secondary">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-phone small"></i></span>
+                                <input type="text" name="phone" value="@ViewBag.User?.Phone" class="form-control border-start-0 ps-0" placeholder="e.g. 0912345678">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Default Shipping Address -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">Default Shipping Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-location-dot small"></i></span>
+                            <input type="text" name="address" value="@ViewBag.User?.Address" class="form-control border-start-0 ps-0" placeholder="Enter your delivery address">
+                        </div>
+                    </div>
+
+                    <!-- Hệ thống nút bấm hành động -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-brand px-4 py-2 fw-bold small">
+                            SAVE CHANGES <i class="fa-solid fa-floppy-disk ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

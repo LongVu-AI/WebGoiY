@@ -1,0 +1,112 @@
+
+body {
+    background-color: #f5f5f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tone màu chủ đạo (Màu cam) */
+.bg-brand { background-color: #ee4d2d !important; }
+.text-brand { color: #ee4d2d !important; }
+.hover-brand:hover { color: #ee4d2d !important; }
+
+/* Thanh tìm kiếm */
+.search-bar { border-radius: 2px 0 0 2px; }
+.btn-search { border-radius: 0 2px 2px 0; background-color: #fb5533; color: white; border: none; }
+.btn-search:hover { background-color: #f04823; color: white; }
+
+/* Navbar Top */
+.navbar-top a { color: white; text-decoration: none; font-size: 13px; margin-right: 15px; }
+.navbar-top a:hover { color: #f8d0c9; }
+
+/* Chân trang (Footer) */
+.footer-title { font-weight: bold; font-size: 14px; text-transform: uppercase; margin-bottom: 20px; color: #333; }
+.footer-link { color: #666; text-decoration: none; font-size: 13px; display: block; margin-bottom: 10px; }
+.footer-link:hover { color: #ee4d2d; }
+
+/* Hiệu ứng thẻ sản phẩm (Card Hover) */
+.p-card-hover { transition: all 0.2s ease; cursor: pointer; }
+.p-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* Màu sắc nút bấm riêng của thương hiệu Zay Shop */
+.btn-brand {
+    background-color: #ee4d2d;
+    color: white;
+    border: none;
+}
+.btn-brand:hover {
+    background-color: #d73a1c;
+    color: white;
+}
+.border-brand {
+    border-color: #ee4d2d !important;
+}
+
+/* Các lớp hỗ trợ hiệu ứng chuyển động mượt */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* Hiệu ứng cho Banner */
+.banner-hover:hover img {
+    opacity: 0.95;
+    cursor: pointer;
+}
+
+/* HIỆU ỨNG THẺ SẢN PHẨM CỰC XỊN */
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.product-card:hover {
+    transform: translateY(-4px); /* Bay nhẹ lên trên */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Phóng to nhẹ ảnh sản phẩm khi di chuột vào card */
+.product-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Ẩn các nút thao tác (Xem, Thêm giỏ) mặc định, chỉ hiện khi hover */
+.product-action-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.product-card:hover .product-action-overlay {
+    opacity: 1;
+}
+
+/* Tùy chỉnh cho thanh trượt Slider sản phẩm */
+#aiRecommendationCarousel {
+    position: relative;
+    padding: 0 10px;
+}
+
+#aiRecommendationCarousel .carousel-control-prev,
+#aiRecommendationCarousel .carousel-control-next {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Khi người dùng rê chuột vào vùng gợi ý thì mới hiện nút bấm qua lại */
+#aiRecommendationCarousel:hover .carousel-control-prev,
+#aiRecommendationCarousel:hover .carousel-control-next {
+    opacity: 1;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+}
+@keyframes slideDownFadeIn {
+    0% {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

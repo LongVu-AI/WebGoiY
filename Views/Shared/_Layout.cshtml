@@ -1,0 +1,188 @@
+﻿@using Microsoft.AspNetCore.Http
+@using WebGoiY.Helpers
+@{
+    // 1. Đọc trực tiếp User từ Session phục vụ khối Login/Logout
+    var loggedInUser = Context.Session.GetObjectFromJson<WebGoiY.Models.User>("loggedInUser");
+
+    //  2. ĐĂNG KÝ THÊM DÒNG NÀY: Đọc giỏ hàng tạm trực tiếp từ Session ngay trên RAM
+    var layoutCart = Context.Session.GetObjectFromJson<List<WebGoiY.Models.Cart>>("cart") ?? new List<WebGoiY.Models.Cart>();
+    
+    // Tính tổng số lượng (Quantity) của tất cả món trong giỏ để hiển thị lên Badge
+    int totalCartItems = layoutCart.Sum(item => item.Quantity);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggest Shop - Smart Recommender System</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+<header class="bg-brand text-white pb-3 shadow-sm" style="position: relative; z-index: 1050;">
+    <div class="container d-flex justify-content-between pt-2 pb-1" style="font-size: 13px; opacity: 0.9;">
+        <div class="navbar-top">
+            <span class="text-white-50"><i class="fa-solid fa-store me-1"></i> Welcome to Zay Smart E-Commerce Platform</span>
+        </div>
+        
+        <div class="navbar-top d-flex align-items-center gap-3">
+            <a href="#" class="text-white text-decoration-none"><i class="fa-solid fa-circle-question"></i> Help</a>
+
+            <!-- KHỐI XỬ LÝ ĐĂNG NHẬP / DROPDOWN TÀI KHOẢN -->
+            @if (loggedInUser == null)
+            {
+                <!-- CHƯA ĐĂNG NHẬP: Hiện nút Login chuẩn -->
+                <a href="/login" class="text-white text-decoration-none fw-bold">
+                    <i class="fa-solid fa-user"></i> Login
+                </a>
+            }
+            else
+            {
+                <!-- ĐÃ ĐĂNG NHẬP THÀNH CÔNG: Hiện Dropdown thông tin tài khoản -->
+                <div class="dropdown d-inline">
+                    <a href="#" class="text-white text-decoration-none fw-bold dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-circle-user me-1"></i>
+                        <span>@(string.IsNullOrEmpty(loggedInUser.FullName) ? loggedInUser.Username : loggedInUser.FullName)</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2 small bg-white">
+                        
+                        @* Phân quyền ADMIN *@
+                        @if (loggedInUser.Role == "ADMIN" || loggedInUser.Role == "admin")
+                        {
+                            <li>
+                                <a class="dropdown-item py-2 text-primary fw-bold d-flex align-items-center" href="/admin/dashboard">
+                                    <i class="fa-solid fa-user-shield me-2"></i>
+                                    <span>Admin Page</span>
+                                </a>
+                            </li>
+                        }
+                        
+                        <li>
+                            <a class="dropdown-item py-2 text-dark d-flex align-items-center" href="/Auth/ShowProfilePage">
+                                <i class="fa-solid fa-gear me-2 text-secondary" style="width: 16px;"></i>
+                                <span class="fw-semibold">Account Profile</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item py-2 text-dark d-flex align-items-center" href="/order-history">
+                                <i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width: 16px;"></i>
+                                <span class="fw-semibold">Order History</span>
+                            </a>
+                        </li>
+
+                        <li><hr class="dropdown-divider opacity-10 my-1"></li>
+
+                        <li>
+                            <a class="dropdown-item py-2 text-danger fw-bold d-flex align-items-center" href="/Auth/Logout">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-2" style="width: 16px;"></i>
+                                <span>Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            }
+    </div>
+    </div>
+    <div class="container mt-3">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center text-md-start mb-3 mb-md-0">
+                <a href="/" class="text-white text-decoration-none fs-2 fw-bold text-nowrap d-inline-flex align-items-center gap-2">
+                    <i class="fa-solid fa-bag-shopping"></i> Suggest Shop
+                </a>
+            </div>
+
+            <div class="col-md-7">
+                <div class="d-flex bg-white p-1 rounded shadow-sm align-items-center">
+                    <div class="dropdown border-end">
+                        <button class="btn btn-white dropdown-toggle fw-bold text-dark border-0 px-3 d-flex align-items-center gap-2 shadow-none small"
+                                type="button" id="searchCategoryButton" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 14px;">
+                            <i class="fa-solid fa-bars text-secondary"></i> Categories
+                        </button>
+                        <ul class="dropdown-menu border-0 shadow mt-2 py-2" aria-labelledby="searchCategoryButton" style="max-height: 350px; overflow-y: auto; min-width: 200px;">
+                            
+                         
+                            @await Component.InvokeAsync("CategoryMenu");
+                         
+                        </ul>
+                    </div>
+
+                    <form class="d-flex flex-grow-1 m-0" action="/Product/ShowShopPage" method="get">
+                        <input type="hidden" name="page" value="1">
+                        <input class="form-control border-0 search-bar shadow-none ps-3"
+                               type="search" name="search" value="@ViewBag.currentSearch"
+                               placeholder="What are you looking for today?" aria-label="Search">
+                        <button class="btn btn-warning px-4 rounded text-white" type="submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-1 d-none d-md-block" style="font-size: 12px; color: #f8d0c9;">
+                    Suggestions: Coffee, Tea Set, Fashion Bags, Home Decor...
+                </div>
+            </div>
+
+            <div class="col-md-2 text-center text-md-end">
+                <a href="/cart" class="text-white text-decoration-none fs-4 position-relative">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span id="cart-badge"
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-white text-danger"
+                          style="font-size: 11px; padding: 3px 6px; transition: transform 0.2s ease;">
+                          @totalCartItems</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-grow-1 container my-4">
+    @RenderBody()
+</main>
+
+<footer class="bg-white pt-5 pb-4 border-top mt-auto text-secondary" style="font-size: 14px;">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h6 class="text-dark fw-bold text-uppercase mb-3">Customer Service</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-secondary text-decoration-none hover-brand"><i class="fa-solid fa-circle-info me-2 text-muted"></i>Help Center</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none hover-brand"><i class="fa-solid fa-truck text-muted me-2"></i>Shipping & Delivery Rules</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h6 class="text-dark fw-bold text-uppercase mb-3">About Suggest Shop</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-secondary text-decoration-none hover-brand"><i class="fa-solid fa-shield-halved me-2 text-muted"></i>Terms of Service</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none hover-brand"><i class="fa-solid fa-lock me-2 text-muted"></i>Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h6 class="text-dark fw-bold text-uppercase mb-3">System Developer</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li>
+                        <a href="/about" class="text-dark fw-bold text-decoration-none text-brand">
+                            <i class="fa-solid fa-graduation-cap text-brand me-2"></i>About Our Team & Thesis <i class="fa-solid fa-arrow-right small ms-1"></i>
+                        </a>
+                    </li>
+                    <li class="small text-muted mt-1">
+                        <i class="fa-solid fa-school me-2"></i>Ho Chi Minh City University of Industry and Trade (HUIT)
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4 text-secondary opacity-25">
+        <div class="text-center text-muted small">
+            &copy; 2026 Suggest Shop. Powered by Smart Data Mining Association Rules Recommender System. All Rights Reserved.
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/main.js"></script>
+</body>
+</html>

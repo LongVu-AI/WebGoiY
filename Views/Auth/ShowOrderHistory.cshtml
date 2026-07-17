@@ -1,0 +1,108 @@
+@{
+    Layout = "_Layout"; // Dùng chung layout hệ thống của bạn
+    ViewData["Title"] = "Order History";
+    
+    // Ép kiểu dữ liệu từ ViewBag về danh sách Order trong C#
+    var orders = ViewBag.Order as List<WebGoiY.Models.Order>;
+}
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12 mb-4">
+      <h4 class="fw-bold text-dark">
+        <i class="fa-solid fa-clock-rotate-left me-2 text-brand"></i>MY ORDER HISTORY
+      </h4>
+      <p class="text-muted small">Track the status and review your past purchases</p>
+      <hr class="opacity-10">
+    </div>
+
+    <!-- TRƯỜNG HỢP CHƯA CÓ ĐƠN HÀNG NÀO -->
+    @if (orders == null || !orders.Any())
+    {
+        <div class="col-12 text-center py-5 bg-white rounded shadow-sm border">
+          <div class="text-muted mb-3" style="font-size: 50px;">
+            <i class="fa-solid fa-box-open"></i>
+          </div>
+          <h5 class="fw-bold text-secondary">You haven't placed any orders yet!</h5>
+          <p class="text-muted small mb-4">Explore our shop and pick your favorite items.</p>
+          <a href="/shop?page=1" class="btn btn-brand fw-bold px-4 py-2 small">START SHOPPING</a>
+        </div>
+    }
+    else
+    {
+        <!-- DANH SÁCH BẢNG ĐƠN HÀNG HỢP LỆ -->
+        <div class="col-12">
+          <div class="bg-white rounded shadow-sm border overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="font-size: 14px;">
+                <thead class="table-light text-secondary fw-bold small">
+                <tr>
+                  <th class="ps-4 py-3">Order ID</th>
+                  <th class="py-3">Date</th>
+                  <th class="py-3">Recipient</th>
+                  <th class="py-3">Payment</th>
+                  <th class="py-3">Total Amount</th>
+                  <th class="py-3">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var o in orders)
+                {
+                    <tr>
+                      <!-- ID đơn hàng -->
+                      <td class="ps-4 fw-bold text-dark">#@o.OrderId</td>
+
+                      <!-- Định dạng ngày tháng C# -->
+                      <td class="text-secondary">
+                          @(o.OrderDate?.ToString("dd-MM-yyyy HH:mm"))
+                      </td>
+                      
+                      <!-- Người nhận & SĐT -->
+                      <td>
+                        <div class="fw-bold text-dark">@o.RecipientName</div>
+                        <div class="text-muted small">@o.PhoneNumber</div>
+                      </td>
+
+                      <!-- Phương thức thanh toán -->
+                      <td class="small fw-bold text-secondary">@o.PaymentMethod</td>
+
+                      
+                      <td class="fw-bold text-brand">@o.TotalPrice?.ToString("N0") £</td>
+
+                      <!-- CỤM ĐỔ MÀU BADGE THEO TRẠNG THÁI ĐƠN HÀNG -->
+                      <td>
+                        @if (string.IsNullOrEmpty(o.Status) || o.Status == "PENDING")
+                        {
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold small">
+                                <i class="fa-solid fa-hourglass-half me-1"></i> Pending Approval
+                            </span>
+                        }
+                        else if (o.Status == "SHIPPING")
+                        {
+                            <span class="badge bg-primary text-white px-3 py-2 rounded-pill fw-bold small">
+                                <i class="fa-solid fa-truck me-1"></i> Shipping
+                            </span>
+                        }
+                        else if (o.Status == "DELIVERED")
+                        {
+                            <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-bold small">
+                                <i class="fa-solid fa-circle-check me-1"></i> Delivered
+                            </span>
+                        }
+                        else if (o.Status == "CANCELLED")
+                        {
+                            <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold small">
+                                <i class="fa-solid fa-circle-xmark me-1"></i> Cancelled
+                            </span>
+                        }
+                      </td>
+                    </tr>
+                }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+    }
+  </div>
+</div>

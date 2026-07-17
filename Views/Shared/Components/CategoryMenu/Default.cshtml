@@ -1,0 +1,14 @@
+ @model IEnumerable<WebGoiY.Models.Category>  
+
+                            @if(Model != null && Model.Any()){
+                                @foreach(var c in Model){
+                            <li>
+                                <a class="dropdown-item small py-2 text-capitalize d-flex align-items-center"
+                                   href="/Product/ShowShopPage?page=1&categories=@c.CategoryId">
+                                    <i class="fa-solid fa-tag text-muted me-2" style="font-size: 11px; width: 15px;"></i>
+                                    <span>@c.CategoryName</span>
+                                </a>
+                            </li>}
+                            }else{
+                                <li><a class="dropdown-item small text-muted">Không có danh mục</a></li>
+                            }

@@ -1,0 +1,208 @@
+@model IEnumerable<WebGoiY.Models.Product>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mt-2">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small bg-white p-3 rounded shadow-sm border">
+
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none text-muted">
+                            <i class="fa-solid fa-house me-1"></i>Home
+                        </a>
+                    </li>
+                    
+                    @if(ViewBag.currentCategory == null && string.IsNullOrEmpty(ViewBag.currentSearch)){
+                    <!-- Trường hợp 1: Vào trang shop thuần túy (Không lọc, không tìm kiếm) -->
+                    <li class="breadcrumb-item active text-dark fw-bold">
+                        Shop
+                    </li>
+                    }else{
+                        <!-- Nếu có lọc hoặc tìm kiếm, mặc định sẽ có nút 'Shop' trung gian để bấm quay lại -->
+                        <li class="breadcrumb-item">
+                            <a href="/Product/ShowShopPage" class="text-decoration-none text-muted">Shop</a>
+                        </li>
+                        @if(ViewBag.currentCategory != null){
+                            <!-- Trường hợp 2: Đang lọc theo danh mục -->
+                            <li class="breadcrumb-item active text-brand fw-bold">
+                                @(ViewBag.CategoryName ?? "Category")
+                            </li>
+                        }
+                        @if(!string.IsNullOrEmpty(ViewBag.currentSearch)){
+                        
+                            
+                            <li class="breadcrumb-item active text-dark fw-bold">
+                                Search: <span> @ViewBag.currentSearch </span>
+                            </li>
+                        }
+                    }
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- TIÊU ĐỀ & BỘ LỌC CẬP NHẬT CHUẨN CHỈ -->
+        <div class="col-12 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h5 class="fw-bold text-dark border-start border-brand border-4 ps-2 text-uppercase mb-1">ALL PRODUCTS</h5>
+                <p class="text-muted small mb-0">Explore our extensive catalog filled with quality data-driven items</p>
+            </div>
+
+            <!-- BỘ LỌC SẮP XẾP THEO GIÁ (SORT BY PRICE) -->
+            <div class="d-flex align-items-center gap-2 bg-white p-2 rounded shadow-sm border" style="min-width: 220px;">
+                <label class="text-muted small fw-bold mb-0 text-nowrap"><i class="fa-solid fa-arrow-down-short-wide text-secondary me-1"></i> Sort By:</label>
+               <select class="form-select form-select-sm border-0 fw-bold text-dark shadow-none" onchange="location = this.value;">
+                <option value="/Product/ShowShopPage?page=1&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=" 
+                        selected="@(string.IsNullOrEmpty(ViewBag.currentSort) ? "selected" : null)">
+                    Relevance
+                </option>
+                <option value="/Product/ShowShopPage?page=1&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=asc" 
+                        selected="@(ViewBag.currentSort == "asc" ? "selected" : null)">
+                    Price: Low to High
+                </option>
+                <option value="/Product/ShowShopPage?page=1&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=desc" 
+                        selected="@(ViewBag.currentSort == "desc" ? "selected" : null)">
+                    Price: High to Low
+                </option>
+            </select>
+            </div>
+        </div>
+
+        <!-- KHỐI THÔNG BÁO TÌM KIẾM -->
+        @if(!string.IsNullOrEmpty(ViewBag.currentSearch)){
+        <div class="col-12 mb-3"">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary p-2 fs-6">
+                    Search results for: <span class="fw-bold text-warning">@ViewBag.currentSearch</span>
+                </span>
+                <a href="/Product/ShowShopPage?page=1" class="btn btn-sm btn-outline-danger rounded-pill py-1px px-3 small">
+                    <i class="fa-solid fa-xmark small"></i> Clear Search
+                </a>
+            </div>
+        </div>
+        } 
+
+        <!-- DANH SÁCH SẢN PHẨM -->
+        @if(Model != null && Model.Any()){
+        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"">
+            @foreach(var p in Model){
+            <div class="col">
+                <a href="/Product/Detail/@p.ProductId" class="text-decoration-none h-100 d-block">
+                    <div class="card h-100 shadow-sm border-0 product-card transition-all">
+                        <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
+                            
+                            <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "/img/img1.png" : p.ImagePath)" 
+                              class="card-img-top w-100 h-100 object-fit-cover" alt="Product Image">
+                        </div>
+                        <div class="card-body p-3 d-flex flex-column bg-white">
+                            <h6 class="card-title text-truncate mb-2 text-dark font-weight-bold" style="font-size: 14px;">@p.ProductName</h6>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-baseline mb-1">
+                                    <span class="text-brand fw-bold me-2">@p.Price.ToString("N0") £</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-warning" style="font-size: 10px;">
+                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">100+ sold</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>}
+        </div>
+        }
+        <!-- ĐOẠN PHÂN TRANG (PAGINATION) ĐÃ DỌN SẠCH LỖI THẺ & ĐỒNG BỘ THAM SỐ SORT -->
+       
+@if (ViewBag.totalPages > 1)
+{
+    <div class="col-12 mt-5 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 bg-light p-3 rounded shadow-sm">
+
+        <div class="text-muted small">
+            Showing page <span class="fw-bold text-dark">@ViewBag.currentPage</span> of <span class="fw-bold text-dark">@ViewBag.totalPages</span>
+        </div>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm m-0">
+
+                <!-- 1. Nút Quay Lại Trang Trước (Previous) -->
+                <li class="page-item @(ViewBag.currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link text-dark fw-bold border-0 bg-transparent"
+                       href="/Product/ShowShopPage?page=@(ViewBag.currentPage - 1)&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=@ViewBag.currentSort"
+                       title="Previous Page">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                </li>
+
+                <!-- Vùng thuật toán hiển thị danh sách số trang lặp -->
+                @{
+                    int currentPage = ViewBag.currentPage ?? 1;
+                    int totalPages = ViewBag.totalPages ?? 1;
+                    
+                    int start = (currentPage - 2 > 0) ? (currentPage - 2) : 1;
+                    int end = (start + 4 < totalPages) ? (start + 4) : totalPages;
+                    
+                    if (end - start < 4 && totalPages >= 5) {
+                        start = (end - 4 > 0) ? (end - 4) : 1;
+                    } 
+                }
+
+                <!-- Hiển thị dấu ba chấm đầu nếu trang bắt đầu lớn hơn 1 -->
+                @if (start > 1)
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 bg-transparent">...</span>
+                    </li>
+                }
+
+                <!-- 2. Danh sách các nút số (i) -->
+                @for (var i = start; i <= end; i++)
+                {
+                    int pageNum = i;
+                    <li class="page-item @(currentPage == pageNum ? "active" : "")">
+                        <a class="page-link border-0 rounded-2 mx-1 fw-bold px-3"
+                           href="/Product/ShowShopPage?page=@pageNum&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=@ViewBag.currentSort"
+                           style="@(currentPage == pageNum ? "background-color: var(--brand-color, #ff6b6b); color: white;" : "color: #495057;")">
+                            @pageNum
+                        </a>
+                    </li>
+                } 
+
+                <!-- Hiển thị dấu ba chấm cuối nếu chưa chạm tới trang cuối cùng -->
+                @if (end < totalPages)
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 bg-transparent">...</span>
+                    </li>
+                }
+
+                <!-- 3. Nút Tiến Sang Trang Tiếp Theo (Next) -->
+                <li class="page-item @(ViewBag.currentPage == ViewBag.totalPages ? "disabled" : "")">
+                    <a class="page-link text-dark fw-bold border-0 bg-transparent"
+                       href="/Product/ShowShopPage?page=@(ViewBag.currentPage + 1)&search=@ViewBag.currentSearch&categories=@ViewBag.currentCategory&sort=@ViewBag.currentSort" 
+                       title="Next Page">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Ô nhảy nhanh đến trang bất kỳ (Go to page) -->
+        <div class="d-flex align-items-center">
+            <label for="goToPageInput" class="text-muted small me-2 mb-0" style="white-space: nowrap;">Go to page:</label>
+            <div class="input-group input-group-sm" style="width: 110px;">
+                <input type="number" id="goToPageInput" class="form-control text-center fw-bold"
+                       min="1" max="@ViewBag.totalPages" value="@ViewBag.currentPage">
+                <button class="btn btn-dark fw-bold" type="button" id="btnGoToPage"
+                        data-max="@ViewBag.totalPages"
+                        onclick="executeGoToPage(this.getAttribute('data-max'))">Go</button>
+            </div>
+        </div>
+
+    </div> 
+}
+        
+
+    </div>
+</div>

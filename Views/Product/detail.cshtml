@@ -1,0 +1,163 @@
+@model WebGoiY.Models.Product // bỏ iEnumerable đi vì chỉ lấy 1 sp 
+
+@if(Model != null ){
+<div class="container mt-4">
+    <div class="row bg-white p-4 rounded shadow-sm border">
+        <div class="col-md-5 mb-4 mb-md-0">
+            <div class="position-relative overflow-hidden rounded bg-light border" style="aspect-ratio: 1/1;">
+                <img src="@(!string.IsNullOrEmpty(Model.ImagePath) ? Model.ImagePath : "https://placehold.co/600x600/e9ecef/495057?text=No+Image")"
+                     class="img-fluid w-100 h-100 object-fit-cover" alt="Main Product Image">
+            </div>
+        </div>
+
+        <div class="col-md-7 ps-md-5 d-flex flex-column">
+            <div class="mb-auto">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small">
+                        <li class="breadcrumb-item"><a href="/Product" class="text-decoration-none text-muted">Home</a></li>
+                        <li class="breadcrumb-item"><a href="/Product/ShowShopPage" class="text-decoration-none text-muted">Shop</a></li>
+                        <li class="breadcrumb-item active text-brand fw-bold">
+                            <a href="/Product/ShowShopPage?categoryId=@Model.CategoryId" class="text-decoration-none text-muted">@Model.Category?.CategoryName</a></li>
+                    </ol>
+                </nav>
+
+                <h2 class="fw-bold text-dark mb-2">@Model.ProductName</h2>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="text-warning small me-2">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <span class="text-muted small border-start ps-2">1.2k+ Sold</span>
+                </div>
+
+                <div class="bg-light p-3 rounded-3 mb-4">
+                    <h1 class="text-brand fw-bold mb-0" >@(Model.Price.ToString("N0")) £</h1>
+                    <span class="text-muted small">Tax included. Shipping calculated at checkout.</span>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark">Product Description</h6>
+                    <p class="text-secondary small lh-lg">
+                         This item is a premium part of our retail collection. Identified by AI analysis as a high-demand product in the 
+                         <span class="fw-bold">@Model.Category?.CategoryName</span> category.
+                        Authentic design and quality materials for long-lasting use.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                     <button class="btn btn-outline-dark btn-lg w-100 py-3 fw-bold"
+                             data-id="@Model.ProductId"
+                             onclick="handleAddToCartWithDataAttr(this)"
+                             style="font-size: 15px;">
+                        <i class="fa-solid fa-cart-plus me-2"></i> ADD TO CART
+                    </button>
+                </div>
+                <div class="col-6">
+                    <a href="/Product/AddToCart?id=@Model.ProductId" class="btn btn-dark btn-lg w-100 py-3 fw-bold d-block text-center text-decoration-none" style="font-size: 15px; line-height: 24px;">
+                        BUY NOW
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. KHỐI SẢN PHẨM TƯƠNG TỰ (CAROUSEL) -->
+    @{
+        var chunks = ViewBag.SimilarProductChunks as List<List<WebGoiY.Models.Product>>;
+        int chunkIndex = 0;
+    }
+        
+    @if (chunks != null && chunks.Any())
+    {
+    <div class="row mt-5">
+        <div class="col-12 mb-3">
+            <h5 class="fw-bold text-dark text-uppercase"><i class="fa-solid fa-layer-group text-secondary me-2"></i>Similar Products</h5>
+            <hr class="m-0 mt-2 opacity-10">
+        </div>
+
+        <div id="similarProductsCarousel" class="carousel slide" data-bs-ride="false">
+            <div class="carousel-inner">
+                @foreach (var chunk in chunks)
+                {    
+                    <!-- Đã sửa: Làm sạch thuộc tính class active động (Xóa dấu ngoặc kép thừa) -->
+                    <div class="carousel-item @(chunkIndex == 0 ? "active" : "")">
+                        <div class="row g-3">
+                            @foreach(var sim in chunk){
+                                <div class="col-6 col-md-3">
+                                    <a href="/Product/Detail?id=@sim.ProductId" class="text-decoration-none h-100 d-block">
+                                        <div class="card h-100 shadow-sm border-0 product-card transition-all">
+                                            <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
+                                                <img src="@(!string.IsNullOrEmpty(sim.ImagePath) ? sim.ImagePath : "https://placehold.co/300x300/e9ecef/495057?text=Product")"
+                                                     class="card-img-top w-100 h-100 object-fit-cover" alt="Similar Item">
+                                            </div>
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title text-truncate text-dark small mb-1">@sim.ProductName</h6>
+                                                <span class="text-brand fw-bold">@sim.Price.ToString("N0") £</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    chunkIndex++;
+                }
+            </div>
+
+            <button class="carousel-control-prev" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="prev" style="width: 5%; left: -50px;">
+                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 40px; height: 40px;"><i class="fa-solid fa-chevron-left"></i></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="next" style="width: 5%; right: -50px;">
+                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 40px; height: 40px;"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </div>
+    </div>
+    }
+
+    <!-- 3. KHỐI RECOMMENDED FOR YOU -->
+    @{
+        var recommendations = ViewBag.FinalRecommendations as List<WebGoiY.Models.Product>;
+    }
+
+    @if (recommendations != null && recommendations.Any())
+    {
+    <div class="row mt-5">
+        <div class="col-12 mb-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fa-solid fa-wand-magic-sparkles text-brand fs-4"></i>
+                <h4 class="fw-bold text-dark m-0">Recommended For You</h4>
+            </div>
+            <p class="text-muted small">Personalized product bundles dynamically generated by AI Association Rule Mining and Trending Items</p>
+        </div>
+
+        <div class="col-12">
+            <div class="d-flex flex-nowrap gap-3 pb-3" style="overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-left: 2px; padding-right: 2px;">
+                @foreach(var rec in recommendations){
+                <div class="flex-shrink-0" style="width: 280px;">
+                    <a href="/Product/Detail?id=@rec.ProductId" class="text-decoration-none h-100 d-block">
+                        <div class="card h-100 shadow-sm border-0 product-card transition-all bg-white">
+                            <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
+                                <img src="@(!string.IsNullOrEmpty(rec.ImagePath) ? rec.ImagePath : "https://placehold.co/300x300/e9ecef/495057?text=AI+Choice")"
+                                     class="card-img-top w-100 h-100 object-fit-cover" alt="Recommended Item">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <!-- Đã sửa: Đưa biểu thức C# logic so sánh IsHot == 1 vào bên trong class chuẩn chỉnh -->
+                                    <span class="badge @(rec.IsHot == 1 ? "bg-danger" : "bg-brand")">
+                                        @(rec.IsHot == 1 ? "HOT Item" : "AI Choice")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                <h6 class="card-title text-truncate text-dark small fw-bold mb-1">@rec.ProductName</h6>
+                                <span class="text-brand fw-bold">@rec.Price.ToString("N0") £</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>
+}
