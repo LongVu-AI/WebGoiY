@@ -157,8 +157,14 @@ window.handleLoadMoreRecommendations = function() {
         }
     }
 };
-// Hàm cập nhật số lượng giỏ hàng bằng AJAX siêu tốc
+// Hàm cập nhật số lượng giỏ hàng bằng AJAX siêu tốc (Đã sửa lỗi đệ quy kho)
 window.handleUpdateQuantityAsync = function(productId, qty, inputElement) {
+    // 1. Lưu lại số lượng cũ trước khi gửi (để phòng trường hợp lỗi thì rollback)
+    // Nếu chưa có thuộc tính tạm, lấy giá trị mặc định lúc đầu của ô input
+    if (!inputElement.dataset.oldValue) {
+        inputElement.dataset.oldValue = inputElement.defaultValue || 1;
+    }
+
     var formData = new FormData();
     formData.append('productId', productId);
     formData.append('qty', qty);
@@ -172,7 +178,11 @@ window.handleUpdateQuantityAsync = function(productId, qty, inputElement) {
         return response.json();
     })
     .then(data => {
+        // TRƯỜNG HỢP 1: Cập nhật THÀNH CÔNG
         if (data.success) {
+            // Cập nhật lại số lượng hợp lệ gần nhất để làm mốc rollback lần sau
+            inputElement.dataset.oldValue = qty;
+
             // 1. Cập nhật lại cột Thành tiền (Total) của riêng dòng sản phẩm đó
             var row = inputElement.closest('tr');
             var amountCell = row.querySelector('.text-brand.fw-bold');
@@ -191,10 +201,22 @@ window.handleUpdateQuantityAsync = function(productId, qty, inputElement) {
             if (badgeEl) {
                 badgeEl.innerText = data.totalItems;
             }
+        } 
+        // TRƯỜNG HỢP 2: THẤT BẠI (Do kho không đủ hàng hoặc sản phẩm bị ẩn)
+        else {
+            // Báo lỗi cho khách biết lý do chuẩn từ Backend gửi về
+            alert(data.message);
+            
+            //  Đưa số lượng ô nhập quay về giá trị hợp lệ trước đó thay vì gọi đệ quy
+            inputElement.value = inputElement.dataset.oldValue;
         }
     })
     .catch(error => {
         console.error('Update Cart Error:', error);
+        // Nếu lỗi kết nối mạng, cũng đưa ô nhập về giá trị cũ cho an toàn
+        if (inputElement.dataset.oldValue) {
+            inputElement.value = inputElement.dataset.oldValue;
+        }
     });
 };
 // =========================================================================

@@ -34,16 +34,10 @@ namespace WebGoiY.Controllers
         [HttpGet]
         public IActionResult Index(int page = 1)
         {
-           
-            
             //in ra danh sách các sản phẩm nổi bật mà thuât toán tìm dc (ishot =1) và phan tramg
             List<Product> products = _context.Products
-                                             .Where(p => p.IsHot ==1)
+                                             .Where(p => p.IsHot ==1 && p.IsActive == 1)
                                              .ToPageList(page, _pageSize, out int totalPages);
-                                             
-
-           
-
             return View(products);
         }
 
@@ -51,7 +45,7 @@ namespace WebGoiY.Controllers
         public IActionResult ShowShopPage(int page = 1,string search = "",string sort ="", string? categories = null)
         {
             int ListPageSize = 12;
-            var query = _context.Products.AsQueryable();
+            var query = _context.Products.Where(p=>p.IsActive == 1).AsQueryable();
             
             //1. tìm kiếm sản phẩm theo tên
             if (!string.IsNullOrEmpty(search))
@@ -99,38 +93,55 @@ namespace WebGoiY.Controllers
             if (string.IsNullOrEmpty(ID))
             {
                 return NotFound(); // trả về trang 404 nếu ko có id
-                
             }   
-            // 1. Lấy thông tin chi tiết sản phẩm hiện tại
-            var productDetail = _context.Products.Include(p=>p.Category).FirstOrDefault(p=>p.ProductId == ID);
 
-            if(productDetail == null) return NotFound();
+            // 1. Lấy thông tin chi tiết sản phẩm hiện tại (Chỉ lấy sản phẩm đang hoạt động)
+            var productDetail = _context.Products
+                                        .Include(p => p.Category)
+                                        .FirstOrDefault(p => p.ProductId == ID && p.IsActive == 1);
 
-            // 2. KHỐI 1: Lấy 12 sản phẩm tương tự CÙNG DANH MỤC (Slider trên)
-            List<Product> similarProducts = _context.Products.
-                                            Where(p=>p.CategoryId == productDetail.CategoryId && p.ProductId != ID)
-                                            .Take(12)
-                                            .ToList();
+            if (productDetail == null) return NotFound();
 
-            // 3. KHỐI 2: RECOMMENDED FOR YOU - ĐỀ XUẤT THEO LUẬT KẾT HỢP DATA MINING (Thanh cuộn dưới)
-            // Bọc dấu % trực tiếp vào giá trị tham số của cái chi tiết sản phẩm đã tìm ở trên
+            // 2. KHỐI 1: Lấy 12 sản phẩm tương tự CÙNG DANH MỤC (Lọc IsActive và ưu tiên còn hàng)
+            List<Product> similarProducts = _context.Products
+                .Where(p => p.CategoryId == productDetail.CategoryId 
+                        && p.ProductId != ID 
+                        && p.IsActive == 1) //  Chuẩn nghiệp vụ: Chỉ lấy sản phẩm đang bán
+                .OrderByDescending(p => p.PhysicalStock - p.ReservedStock > 0) // Ưu tiên hàng còn trên kệ hiện lên trước
+                .Take(12)
+                .ToList();
+
+            // 3. KHỐI 2: RECOMMENDED FOR YOU - ĐỀ XUẤT THEO LUẬT KẾT HỢP DATA MINING
             string formatProdName = $"%{productDetail.ProductName}%";
-            // Lấy danh sách tên sản phẩm được đề xuất từ bảng BestRules trước
-            var recommendedNames = _context.BestRules
-                                    .Where(r=>EF.Functions.Like(r.Antecedents, formatProdName))
-                                    .Select(r=>r.Consequents)
-                                    .Distinct();
-            // Sau đó lọc trong bảng Products                        
-            var ruleBasedProducts = _context.Products
-                                    .Where(p=>recommendedNames.Contains(p.ProductName) && p.ProductId != ID)
-                                    .ToList();
+
+            // Lấy danh sách chuỗi kết quả (Consequents) từ bảng BestRules
+            var recommendedRules = _context.BestRules
+                .Where(r => EF.Functions.Like(r.Antecedents, formatProdName))
+                .Select(r => r.Consequents)
+                .Distinct()
+                .ToList(); // Ép về List trên RAM để xử lý tách chuỗi combo dễ dàng
 
             List<Product> finalRecommendations = new List<Product>();
-            if(ruleBasedProducts != null && ruleBasedProducts.Any())
+
+            if (recommendedRules.Any())
             {
+                //  GIẢI QUYẾT COMBO: Tách các sản phẩm trong chuỗi "SP A, SP B" thành các từ khóa riêng lẻ
+                var allRecommendedNames = recommendedRules
+                    .SelectMany(rule => rule.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    .Select(name => name.Trim())
+                    .Distinct()
+                    .ToList();
+
+                // Quét DB một lần duy nhất để lấy các sản phẩm được AI gợi ý
+                var ruleBasedProducts = _context.Products
+                    .Where(p => allRecommendedNames.Contains(p.ProductName) 
+                            && p.ProductId != ID 
+                            && p.IsActive == 1) //  Chỉ lấy sản phẩm đang bán
+                    .ToList();
+
+                // Lọc trùng với khối 1 và giới hạn 40 sản phẩm
                 foreach (var p in ruleBasedProducts)
                 {
-                    // Lọc trùng tuyệt đối với khối Similar Products ở trên (Tương đương .stream().noneMatch trong Java)
                     if (!similarProducts.Any(sim => sim.ProductId == p.ProductId))
                     {
                         finalRecommendations.Add(p);
@@ -142,8 +153,8 @@ namespace WebGoiY.Controllers
                 }
             }
 
-            // 3. ĐẨY DỮ LIỆU RA VIEW
-            // Khối 1: Đã chia cụm 4 để làm Carousel (Như câu trước)
+            // 4. ĐẨY DỮ LIỆU RA VIEW
+            // Khối 1: Chia cụm 4 để làm Carousel Slider
             ViewBag.SimilarProductChunks = similarProducts
                 .Select((prod, index) => new { prod, index })
                 .GroupBy(x => x.index / 4)
@@ -151,6 +162,7 @@ namespace WebGoiY.Controllers
                 .ToList();
 
             ViewBag.FinalRecommendations = finalRecommendations;
+            
             return View(productDetail);
         }
         
@@ -160,5 +172,11 @@ namespace WebGoiY.Controllers
         {
             return View("Error!");
         }
+
+        public IActionResult About()
+        {
+            return View("about"); 
+        }
+        
     }
 }
