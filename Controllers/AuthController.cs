@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AspNetCoreGeneratedDocument;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 using WebGoiY.Helpers;
 using WebGoiY.Models;
@@ -56,33 +57,27 @@ namespace WebGoiY.Controllers
         }
 
         [HttpPost]
-        public IActionResult HandleRegister(string userName, string passWord, string confirmPass, string fullName, string   email )
+        public IActionResult HandleRegister(User userModel, string confirmPass )
         {
             //tìm tên người dùng
-            var user = _context.Users.FirstOrDefault(p=>p.Username == userName);
-             // 1. Kiểm tra xem mật khẩu nhập lại có khớp nhau không
-            if (passWord != confirmPass)
+            
+            if (userModel.Password != confirmPass)
             {
                 ViewBag.Error = "Password do not match!";
                 return View("Register");
             }
+            var checkName = _context.Users.FirstOrDefault(p=>p.Username == userModel.Username);
              // 2. Kiểm tra xem tên tài khoản đã bị ai khác đăng ký chưa
-             if(user!= null)
+             if(checkName != null)
             {
                 ViewBag.Error ="Username is already taken!";
                 return View("Register");
           
             }
-            // 3. Tạo đối tượng User mới để lưu xuống DB
-            var newUser = new User
-            {
-                Username = userName,
-                Password = passWord,
-                FullName = fullName,
-                Email = email
-            };
+            
+        
             // Lưu vào Database thông qua EF Core
-            _context.Users.Add(newUser);
+            _context.Users.Add(userModel);
             _context.SaveChanges();
             // 4. Đăng ký thành công thì đá sang trang Đăng nhập kèm tham số success
             // Dịch từ: return "redirect:/login?success=true";

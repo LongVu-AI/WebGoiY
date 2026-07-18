@@ -11,7 +11,15 @@ public partial class Order
 
     public DateTime? OrderDate { get; set; }
 
-    public Double? TotalPrice { get; set; }
+    public decimal SubtotalPrice { get; set; }
+
+    public decimal? DiscountAmount { get; set; }
+
+    public decimal? TaxAmount { get; set; }
+
+    public decimal? ShippingFee { get; set; }
+
+    public decimal TotalPrice { get; set; }
 
     public string ShippingAddress { get; set; } = null!;
 
@@ -28,6 +36,8 @@ public partial class Order
     public string? Status { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
+    public virtual ICollection<OrderStatusHistory> OrderStatusHistories { get; set; } = new List<OrderStatusHistory>();
 
     public virtual User? User { get; set; }
 }

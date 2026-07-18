@@ -19,7 +19,11 @@ public partial class User
 
     public string? Address { get; set; }
 
+    public string? Avatarpath { get; set; }
+
     public string? Role { get; set; }
+
+    public virtual ICollection<OrderStatusHistory> OrderStatusHistories { get; set; } = new List<OrderStatusHistory>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }

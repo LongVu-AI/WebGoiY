@@ -17,7 +17,17 @@ public partial class Product
 
     public int? IsHot { get; set; }
 
+    public int? PhysicalStock { get; set; }
+
+    public int? ReservedStock { get; set; }
+
+    public int? Sold { get; set; }
+
+    public sbyte? IsActive { get; set; }
+
     public virtual Category? Category { get; set; }
+
+    public virtual ICollection<ImportOrderDetail> ImportOrderDetails { get; set; } = new List<ImportOrderDetail>();
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 }

@@ -18,13 +18,12 @@
 
                 <!-- Form gửi dữ liệu Đăng Ký -->
                 <form action="/Auth/HandleRegister" method="post">
-                    <!-- Full Name -->
+                    <!-- Username -->
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Full Name</label>
+                        <label class="form-label small fw-bold text-secondary">Username *</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-id-card small"></i></span>
-                            <!-- Đã sửa: name="fullName" trùng khớp tham số Controller -->
-                            <input type="text" name="fullName" class="form-control border-start-0 ps-0" placeholder="e.g. Vu Long">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user small"></i></span>
+                             <input type="text" name="Username" required class="form-control border-start-0 ps-0" placeholder="Choose a unique username">
                         </div>
                     </div>
 
@@ -33,20 +32,12 @@
                         <label class="form-label small fw-bold text-secondary">Email Address</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope small"></i></span>
-                            <!-- Đã sửa: name="email" trùng khớp tham số Controller -->
-                            <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="name@example.com">
+                        
+                            <input type="email" name="Email" class="form-control border-start-0 ps-0" placeholder="name@example.com">
                         </div>
                     </div>
 
-                    <!-- Username -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Username *</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user small"></i></span>
-                            <!-- Đã sửa: đổi thành name="userName" (chữ N viết hoa giống tham số Controller) -->
-                            <input type="text" name="userName" required class="form-control border-start-0 ps-0" placeholder="Choose a unique username">
-                        </div>
-                    </div>
+                    
 
                     <!-- Password -->
                     <div class="mb-3">
@@ -54,7 +45,7 @@
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock small"></i></span>
                             <!-- Đã sửa: đổi thành name="passWord" (chữ W viết hoa giống tham số Controller) -->
-                            <input type="password" name="passWord" required class="form-control border-start-0 ps-0" placeholder="Create a strong password">
+                            <input type="password" name="Password" required class="form-control border-start-0 ps-0" placeholder="Create a strong password">
                         </div>
                     </div>
 

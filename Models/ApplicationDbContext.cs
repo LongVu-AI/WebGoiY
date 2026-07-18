@@ -20,16 +20,25 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<ImportOrder> ImportOrders { get; set; }
+
+    public virtual DbSet<ImportOrderDetail> ImportOrderDetails { get; set; }
+
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
 
+    public virtual DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
+    public virtual DbSet<Supplier> Suppliers { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
-    public DbSet<Cart> Carts { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-         => optionsBuilder.UseMySql("server=127.0.0.1;port=3306;database=SHOPGOIY;user=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("9.7.1-mysql"));
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseMySql("server=127.0.0.1;database=SHOPGOIY;uid=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("9.7.1-mysql"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +76,60 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("category_name");
         });
 
+        modelBuilder.Entity<ImportOrder>(entity =>
+        {
+            entity.HasKey(e => e.ImportId).HasName("PRIMARY");
+
+            entity.ToTable("import_orders");
+
+            entity.HasIndex(e => e.SupplierId, "supplier_id");
+
+            entity.Property(e => e.ImportId).HasColumnName("import_id");
+            entity.Property(e => e.ImportDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime")
+                .HasColumnName("import_date");
+            entity.Property(e => e.SupplierId)
+                .HasMaxLength(50)
+                .HasColumnName("supplier_id");
+            entity.Property(e => e.TotalCost)
+                .HasPrecision(10, 2)
+                .HasColumnName("total_cost");
+
+            entity.HasOne(d => d.Supplier).WithMany(p => p.ImportOrders)
+                .HasForeignKey(d => d.SupplierId)
+                .HasConstraintName("import_orders_ibfk_1");
+        });
+
+        modelBuilder.Entity<ImportOrderDetail>(entity =>
+        {
+            entity.HasKey(e => e.ImportDetailId).HasName("PRIMARY");
+
+            entity.ToTable("import_order_details");
+
+            entity.HasIndex(e => e.ImportId, "import_id");
+
+            entity.HasIndex(e => e.ProductId, "product_id");
+
+            entity.Property(e => e.ImportDetailId).HasColumnName("import_detail_id");
+            entity.Property(e => e.ImportId).HasColumnName("import_id");
+            entity.Property(e => e.ImportPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("import_price");
+            entity.Property(e => e.ImportQuantity).HasColumnName("import_quantity");
+            entity.Property(e => e.ProductId)
+                .HasMaxLength(50)
+                .HasColumnName("product_id");
+
+            entity.HasOne(d => d.Import).WithMany(p => p.ImportOrderDetails)
+                .HasForeignKey(d => d.ImportId)
+                .HasConstraintName("import_order_details_ibfk_1");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ImportOrderDetails)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("import_order_details_ibfk_2");
+        });
+
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PRIMARY");
@@ -76,6 +139,10 @@ public partial class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.UserId, "user_id");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.DiscountAmount)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'")
+                .HasColumnName("discount_amount");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
@@ -99,10 +166,21 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.ShippingAddress)
                 .HasMaxLength(255)
                 .HasColumnName("shipping_address");
+            entity.Property(e => e.ShippingFee)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'")
+                .HasColumnName("shipping_fee");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'PENDING'")
                 .HasColumnName("status");
+            entity.Property(e => e.SubtotalPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("subtotal_price");
+            entity.Property(e => e.TaxAmount)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'")
+                .HasColumnName("tax_amount");
             entity.Property(e => e.TotalPrice)
                 .HasPrecision(10, 2)
                 .HasColumnName("total_price");
@@ -142,6 +220,40 @@ public partial class ApplicationDbContext : DbContext
                 .HasConstraintName("order_details_ibfk_2");
         });
 
+        modelBuilder.Entity<OrderStatusHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId).HasName("PRIMARY");
+
+            entity.ToTable("order_status_history");
+
+            entity.HasIndex(e => e.ChangedBy, "changed_by");
+
+            entity.HasIndex(e => e.OrderId, "order_id");
+
+            entity.Property(e => e.HistoryId).HasColumnName("history_id");
+            entity.Property(e => e.ChangedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime")
+                .HasColumnName("changed_at");
+            entity.Property(e => e.ChangedBy).HasColumnName("changed_by");
+            entity.Property(e => e.Notes)
+                .HasMaxLength(500)
+                .HasColumnName("notes");
+            entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasColumnName("status");
+
+            entity.HasOne(d => d.ChangedByNavigation).WithMany(p => p.OrderStatusHistories)
+                .HasForeignKey(d => d.ChangedBy)
+                .HasConstraintName("order_status_history_ibfk_2");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.OrderStatusHistories)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("order_status_history_ibfk_1");
+        });
+
         modelBuilder.Entity<Product>(entity =>
         {
             entity.HasKey(e => e.ProductId).HasName("PRIMARY");
@@ -159,20 +271,54 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.ImagePath)
                 .HasMaxLength(255)
                 .HasColumnName("image_path");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValueSql("'1'")
+                .HasColumnName("is_active");
             entity.Property(e => e.IsHot)
                 .HasDefaultValueSql("'0'")
                 .HasColumnName("is_hot");
-               
+            entity.Property(e => e.PhysicalStock)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("physical_stock");
             entity.Property(e => e.Price)
                 .HasPrecision(10, 2)
                 .HasColumnName("price");
             entity.Property(e => e.ProductName)
                 .HasColumnType("text")
                 .HasColumnName("product_name");
+            entity.Property(e => e.ReservedStock)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("reserved_stock");
+            entity.Property(e => e.Sold)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("sold");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("products_ibfk_1");
+        });
+
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.HasKey(e => e.SupplierId).HasName("PRIMARY");
+
+            entity.ToTable("suppliers");
+
+            entity.Property(e => e.SupplierId)
+                .HasMaxLength(50)
+                .HasColumnName("supplier_id");
+            entity.Property(e => e.Address)
+                .HasMaxLength(255)
+                .HasColumnName("address");
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .HasColumnName("email");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(15)
+                .HasColumnName("phone_number");
+            entity.Property(e => e.SupplierName)
+                .HasMaxLength(255)
+                .HasColumnName("supplier_name");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -187,6 +333,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
                 .HasColumnName("address");
+            entity.Property(e => e.Avatarpath)
+                .HasMaxLength(255)
+                .HasColumnName("avatarpath");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
