@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // --- 🌟 CẤU HÌNH BIỂU ĐỒ AI DASHBOARD (ĐÃ ĐƯỢC GỘP PHẲNG, CHẠY CHUẨN CHỈ) ---
+    // ---  CẤU HÌNH BIỂU ĐỒ AI DASHBOARD (ĐÃ ĐƯỢC GỘP PHẲNG, CHẠY CHUẨN CHỈ) ---
     const txChartCanvas = document.getElementById('transactionsChart');
     const catChartCanvas = document.getElementById('categoryRulesChart');
 

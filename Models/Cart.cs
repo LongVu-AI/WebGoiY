@@ -13,7 +13,7 @@ namespace WebGoiY.Models
         public int UserId { get; set; } // Khóa ngoại liên kết với bảng User
 
         [Required]
-        public string ProductId { get; set; } // Khóa ngoại liên kết với bảng Product
+        public required string ProductId { get; set; } // Khóa ngoại liên kết với bảng Product
 
         [Required]
         public int Quantity { get; set; } // Số lượng sản phẩm mua
@@ -22,17 +22,17 @@ namespace WebGoiY.Models
         // EF Core sẽ tự động dựa vào ProductId để bốc trọn bộ thông tin: 
         // ProductName, Price, ImagePath từ bảng Product qua đây mà không cần khai báo lại.
         [ForeignKey("ProductId")]
-        public virtual Product Product { get; set; }
+        public virtual required Product Product { get; set; }
 
-        // --- ĐỔI TỪ getAmount() CỦA JAVA SANG PROPERTY C# ---
+         
         // Tính tổng tiền của riêng món này (Đơn giá x Số lượng)
         [NotMapped] // Khai báo cho EF Core biết thuộc tính này chỉ tính toán, không tạo cột trong DB
-        public double Amount 
+        public decimal Amount 
         {
             get 
             {
                 // Ép kiểu Price về double nếu trong DB bạn đang để kiểu decimal
-                return (double)(Product?.Price ?? 0) * Quantity;
+                return (Product?.Price ?? 0) * Quantity;
             }
         }
     }

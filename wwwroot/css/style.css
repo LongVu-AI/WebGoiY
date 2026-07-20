@@ -110,3 +110,67 @@ body {
         opacity: 1;
     }
 }
+/* ========================================================================= */
+/*   CẤU HÌNH CSS DÀNH RIÊNG CHO TRANG SECURE CHECKOUT                       */
+/* ========================================================================= */
+
+/* Khung card bọc ngoài đổ bóng nhẹ */
+.checkout-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+}
+
+/* Chuẩn hóa các ô nhập liệu Input */
+.checkout-card .form-control, 
+.checkout-card textarea {
+    border-radius: 8px !important;
+    border: 1px solid #dee2e6;
+    padding: 10px 14px;
+    transition: all 0.2s ease;
+}
+
+/* Hiệu ứng khi focus vào ô nhập liệu - chuyển sang màu cam thương hiệu */
+.checkout-card .form-control:focus, 
+.checkout-card textarea:focus {
+    border-color: #ee4d2d !important;
+    box-shadow: 0 0 0 0.2rem rgba(238, 77, 45, 0.1) !important;
+}
+
+/* Hộp chọn phương thức thanh toán */
+.payment-method-box {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.payment-method-box:hover {
+    border-color: #ced4da;
+    background-color: #f1f3f5;
+}
+
+/* Đổi màu viền chấm tròn Radio khi được chọn sang màu cam */
+.payment-method-box .form-check-input:checked {
+    background-color: #ee4d2d !important;
+    border-color: #ee4d2d !important;
+}
+
+/* Vùng cuộn danh sách sản phẩm bên phải */
+.product-scroll-area {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.product-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.product-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #dbdbdb;
+    border-radius: 10px;
+}

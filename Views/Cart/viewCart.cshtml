@@ -4,7 +4,7 @@
     // Ép kiểu an toàn bằng toán tử 'as', nếu null sẽ tự động trả về list rỗng thay vì làm sập trang
     var cartItems = ViewBag.CartItems as List<WebGoiY.Models.Cart> ?? new List<WebGoiY.Models.Cart>();
     var recommendations = ViewBag.Recommendations as List<WebGoiY.Models.Product> ?? new List<WebGoiY.Models.Product>();
-    double totalPrice = ViewBag.TotalPrice != null ? (double)ViewBag.TotalPrice : 0;
+    decimal totalPrice = ViewBag.TotalPrice != null ? (decimal)ViewBag.TotalPrice : 0;
 }
 
 <div class="container mt-4">
@@ -58,17 +58,17 @@
                                                 
                                                 <!-- BỔ SUNG: Hiển thị cảnh báo số lượng tồn kho còn lại -->
                                                 <div class="mt-1" style="font-size: 11px;">
-                                                    @if (item.Product.stock_quantity <= 5 && item.Product.stock_quantity > 0)
+                                                    @if (item.Product.PhysicalStock <= 5 && item.Product.PhysicalStock > 0)
                                                     {
-                                                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Only @item.Product.stock_quantity left!</span>
+                                                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Only @item.Product.PhysicalStock left!</span>
                                                     }
-                                                    else if (item.Product.stock_quantity == 0)
+                                                    else if (item.Product.PhysicalStock == 0)
                                                     {
                                                         <span class="text-danger fw-bold"><i class="fa-solid fa-circle-xmark"></i> Out of stock</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="text-muted"><i class="fa-solid fa-box-open"></i> Available: @item.Product.stock_quantity</span>
+                                                        <span class="text-muted"><i class="fa-solid fa-box-open"></i> Available: @item.Product.PhysicalStock</span>
                                                     }
                                                 </div>
                                             </div>
@@ -80,11 +80,11 @@
                                     <td class="text-center">
                                         <div class="d-flex align-items-center justify-content-center">
                                             <div class="input-group input-group-sm" style="max-width: 100px;">
-                                                <!-- 🛠️ ĐÃ SỬA: Thêm thuộc tính max để giới hạn ngay trên giao diện -->
+                                                <!-- Thêm thuộc tính max để giới hạn ngay trên giao diện -->
                                                 <input type="number" 
                                                     value="@item.Quantity" 
                                                     min="1" 
-                                                    max="@item.Product.stock_quantity" 
+                                                    max="@item.Product.PhysicalStock" 
                                                     onchange="handleUpdateQuantityAsync('@item.ProductId', this.value, this)" 
                                                     class="form-control text-center fw-bold border-secondary-subtle">
                                             </div>
