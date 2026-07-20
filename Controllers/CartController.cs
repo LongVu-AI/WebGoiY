@@ -35,7 +35,11 @@ namespace WebGoiY.Controllers
 
             // Chỉ giữ lại những sản phẩm hợp lệ và đang còn kinh doanh (IsActive == 1)
             cartItems = cartItems.Where(item => item.Product != null && item.Product.IsActive == 1).ToList();
+<<<<<<< HEAD
             decimal total = cartItems.Sum(item => item.Amount);
+=======
+            double total = cartItems.Sum(item => item.Amount);
+>>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
             
             List<Product> recommendations = new List<Product>();
             HashSet<string> addedProductIds = new HashSet<string>();
@@ -191,8 +195,12 @@ namespace WebGoiY.Controllers
                 var newItem = new Cart
                 {
                     ProductId = product.ProductId,
+<<<<<<< HEAD
                     Quantity = qty,
                     Product = product
+=======
+                    Quantity = qty 
+>>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
                 };
                 cartItems.Add(newItem);
             }
@@ -278,8 +286,13 @@ namespace WebGoiY.Controllers
             cartItem = cartItem.Where(item => item.Product != null).ToList();
 
             // Tính toán số liệu mới trả về
+<<<<<<< HEAD
             decimal newAmount = existingItem != null ? existingItem.Amount : 0;
             decimal newGrandTotal = cartItem.Sum(item => item.Amount);
+=======
+            double newAmount = existingItem != null ? existingItem.Amount : 0;
+            double newGrandTotal = cartItem.Sum(item => item.Amount);
+>>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
             int newTotalItems = cartItem.Sum(item => item.Quantity);
 
             return Json(new
