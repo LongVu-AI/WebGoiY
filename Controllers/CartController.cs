@@ -35,11 +35,8 @@ namespace WebGoiY.Controllers
 
             // Chỉ giữ lại những sản phẩm hợp lệ và đang còn kinh doanh (IsActive == 1)
             cartItems = cartItems.Where(item => item.Product != null && item.Product.IsActive == 1).ToList();
-<<<<<<< HEAD
             decimal total = cartItems.Sum(item => item.Amount);
-=======
-            double total = cartItems.Sum(item => item.Amount);
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
+          
             
             List<Product> recommendations = new List<Product>();
             HashSet<string> addedProductIds = new HashSet<string>();
@@ -195,12 +192,8 @@ namespace WebGoiY.Controllers
                 var newItem = new Cart
                 {
                     ProductId = product.ProductId,
-<<<<<<< HEAD
                     Quantity = qty,
                     Product = product
-=======
-                    Quantity = qty 
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
                 };
                 cartItems.Add(newItem);
             }
@@ -242,7 +235,7 @@ namespace WebGoiY.Controllers
         {
             var cartItem = HttpContext.Session.GetObjectFromJson<List<Cart>>("cart") ?? new List<Cart>();
             var existingItem = cartItem.FirstOrDefault(item => item.ProductId == productId);
-            
+
             if (existingItem != null)
             {
                 if (qty <= 0)
@@ -251,16 +244,16 @@ namespace WebGoiY.Controllers
                 }
                 else
                 {
-                    //  Check thêm điều kiện IsActive để tránh việc tăng số lượng sản phẩm vừa bị ẩn
                     var productInDB = _context.Products.FirstOrDefault(p => p.ProductId == productId && p.IsActive == 1);
                     if (productInDB != null)
                     {
-                        // Tính toán tồn kho khả dụng hiện thực (Thực tế - Giữ chỗ)
-                        int availableStock = productInDB.PhysicalStock - productInDB.ReservedStock ?? 0;
+                        
+                        int physical = productInDB.PhysicalStock ?? 0;
+                        int reserved = productInDB.ReservedStock ?? 0;
+                        int availableStock = physical - reserved;
 
                         if (qty > availableStock)
                         {
-                            // Trả về success = false để thông báo lỗi cho AJAX Frontend chặn lại
                             return Json(new
                             {
                                 success = false,
@@ -275,81 +268,96 @@ namespace WebGoiY.Controllers
 
                     existingItem.Quantity = qty;
                 }
+
                 HttpContext.Session.SetObjectAsJson("cart", cartItem);
             }
 
-            // Map lại thông tin sản phẩm từ DB để tính tiền chuẩn
+            // Map lại thông tin sản phẩm từ DB
             foreach (var item in cartItem)
             {
                 item.Product = _context.Products.FirstOrDefault(p => p.ProductId == item.ProductId)!;
             }
             cartItem = cartItem.Where(item => item.Product != null).ToList();
 
-            // Tính toán số liệu mới trả về
-<<<<<<< HEAD
             decimal newAmount = existingItem != null ? existingItem.Amount : 0;
             decimal newGrandTotal = cartItem.Sum(item => item.Amount);
-=======
-            double newAmount = existingItem != null ? existingItem.Amount : 0;
-            double newGrandTotal = cartItem.Sum(item => item.Amount);
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
             int newTotalItems = cartItem.Sum(item => item.Quantity);
 
             return Json(new
             {
-                success = true, // Cập nhật thành công thực sự
+                success = true,
                 amount = newAmount.ToString("N2") + " £",
                 grandTotal = newGrandTotal.ToString("N2") + " £",
                 totalItems = newTotalItems
             });
         }
+
         // ==========================================
-        // 5. THÊM VÀO GIỎ HÀNG ASYNC (AJAX - KHÔNG LOAD TRANG)
+        // 5. THÊM VÀO GIỎ HÀNG ASYNC (CHECK CHUẨN TỒN KHO)
         // ==========================================
         [HttpGet]
+        [HttpPost] 
         [Route("/Cart/add-async")] 
-        public IActionResult AddToCartAsync(string id)
+        public IActionResult AddToCartAsync(string id, int qty = 1)
         {
-            var product = _context.Products.FirstOrDefault(p => p.ProductId == id);
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == id && p.IsActive == 1);
 
-            if (product != null)
+            if (product == null)
             {
-                var cart = HttpContext.Session.GetObjectFromJson<List<Cart>>("cart") ?? new List<Cart>();
-                var existingItem = cart.FirstOrDefault(item => item.ProductId == id);
-
-                if (existingItem != null)
-                {
-                    existingItem.Quantity += 1;
-                }
-                else
-                {
-                    var newItem = new Cart
-                    {
-                        ProductId = id,
-                        Quantity = 1,
-                        Product = product
-                    };
-                    cart.Add(newItem);
-                }
-
-                HttpContext.Session.SetObjectAsJson("cart", cart);
-                int totalQuantity = cart.Sum(item => item.Quantity);
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"Product {product.ProductName} has been successfully added to your cart!",
-                    totalItems = totalQuantity  
-                });
+                return Json(new { success = false, message = "Product not found or inactive!" });
             }
-            else
+
+            
+            int physical = product.PhysicalStock ?? 0;
+            int reserved = product.ReservedStock ?? 0;
+            int availableStock = physical - reserved;
+
+            if (availableStock <= 0)
+            {
+                return Json(new { success = false, message = "Sorry, this product is currently out of stock!" });
+            }
+
+            var cart = HttpContext.Session.GetObjectFromJson<List<Cart>>("cart") ?? new List<Cart>();
+            var existingItem = cart.FirstOrDefault(item => item.ProductId == id);
+
+            // Tính tổng số lượng dự kiến nếu thêm tiếp vào giỏ
+            int currentInCart = existingItem != null ? existingItem.Quantity : 0;
+            int targetQuantity = currentInCart + (qty > 0 ? qty : 1);
+
+            //  Không cho tổng số lượng trong giỏ vượt quá Tồn kho khả dụng
+            if (targetQuantity > availableStock)
             {
                 return Json(new
                 {
                     success = false,
-                    message = "Product not found!"
+                    message = $"Cannot add more! You already have {currentInCart} in cart, and only {availableStock} available in stock."
                 });
             }
+
+            if (existingItem != null)
+            {
+                existingItem.Quantity = targetQuantity;
+            }
+            else
+            {
+                var newItem = new Cart
+                {
+                    ProductId = id,
+                    Quantity = targetQuantity,
+                    Product = product
+                };
+                cart.Add(newItem);
+            }
+
+            HttpContext.Session.SetObjectAsJson("cart", cart);
+            int totalQuantity = cart.Sum(item => item.Quantity);
+
+            return Json(new
+            {
+                success = true,
+                message = $"Product {product.ProductName} has been successfully added to your cart!",
+                totalItems = totalQuantity  
+            });
         }
     }
 }

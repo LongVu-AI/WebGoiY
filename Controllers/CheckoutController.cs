@@ -39,14 +39,12 @@ namespace WebGoiY.Controllers
             }
             cartItems = cartItems.Where(item => item.Product != null).ToList();
 
-            //  PHÂN RÃ DÒNG TIỀN THEO DATABASE MỚI
             decimal subtotal = (decimal)cartItems.Sum(item => item.Amount);
-            decimal discount = 0.00m; // Có thể xử lý thêm logic Voucher ở đây nếu có
-            decimal shippingFee = 0.00m; // Mặc định FREE Ship như giao diện cũ
-            decimal tax = Math.Round(subtotal * 0.10m, 2); // Giả định thuế VAT 10% theo chuẩn hệ thống
+            decimal discount = 0.00m; 
+            decimal shippingFee = 0.00m; 
+            decimal tax = Math.Round(subtotal * 0.10m, 2); 
             decimal grandTotal = subtotal - discount + shippingFee + tax;
 
-            // Truyền toàn bộ dữ liệu phân rã ra Giao diện
             ViewBag.CartItems = cartItems;
             ViewBag.SubtotalPrice = subtotal;
             ViewBag.DiscountAmount = discount;
@@ -59,18 +57,9 @@ namespace WebGoiY.Controllers
 
         [HttpPost]
         [Route("Checkout/PlaceOrder")]
-        public IActionResult handlePlaceOrder(string recipientName,
-                                                string phoneNumber,
-                                                string shippingAddress,
-                                                string email,
-                                                string orderNotes,
-                                                string paymentMethod,
-                                                decimal subtotalPrice,
-                                                decimal discountAmount,
-                                                decimal taxAmount,
-                                                decimal shippingFee,
-                                                decimal totalPrice)
+        public IActionResult handlePlaceOrder(CheckoutViewModel model)
         {
+            // 1. Kiểm tra session đăng nhập
             var loggedInUser = HttpContext.Session.GetObjectFromJson<User>("loggedInUser");
             if (loggedInUser == null)
             {
@@ -85,48 +74,70 @@ namespace WebGoiY.Controllers
                 return RedirectToAction("ViewCart", "Cart");
             }
 
-            foreach (var item in cartItems)
-            {
-                item.Product = _context.Products.FirstOrDefault(p => p.ProductId == item.ProductId)!;
-            }
-            cartItems = cartItems.Where(item => item.Product != null).ToList();
-
-            //  1. TẠO ĐƠN HÀNG MẸ ĐỒNG BỘ 100% CÁC CỘT DÒNG TIỀN MỚI
+            // 2. TẠO ĐƠN HÀNG MẸ
             var order = new Order
             {
                 UserId = currentUserId,
-                RecipientName = recipientName,
-                PhoneNumber = phoneNumber,
-                ShippingAddress = shippingAddress,
-                Email = email,
-                OrderNotes = orderNotes,
-                PaymentMethod = paymentMethod,
+                RecipientName = model.RecipientName,
+                PhoneNumber = model.PhoneNumber,
+                ShippingAddress = model.ShippingAddress,
+                Email = model.Email,
+                OrderNotes = model.OrderNotes,
+                PaymentMethod = model.PaymentMethod,
                 OrderDate = DateTime.Now,  
                 Status = "PENDING",       
-                SubtotalPrice = subtotalPrice,
-                DiscountAmount = discountAmount,
-                TaxAmount = taxAmount,
-                ShippingFee = shippingFee,
-                TotalPrice = totalPrice
+                SubtotalPrice = model.SubtotalPrice,
+                DiscountAmount = model.DiscountAmount,
+                TaxAmount = model.TaxAmount,
+                ShippingFee = model.ShippingFee,
+                TotalPrice = model.TotalPrice
             };
 
             _context.Orders.Add(order);
-            _context.SaveChanges(); 
+            _context.SaveChanges(); // Lấy OrderId tự tăng
 
-            // 2. LƯU CHI TIẾT ĐƠN HÀNG CON
+            //  Xóa sạch bộ nhớ tạm Tracking của EF Core để tránh xung đột
+            _context.ChangeTracker.Clear();
+
+            // 3. LƯU CHI TIẾT ĐƠN HÀNG CON & CẬP NHẬT RESERVED_STOCK BẰNG SQL TRỰC TIẾP
             foreach (var item in cartItems)
             {
-                var detail = new OrderDetail
+                // Lấy đơn giá chuẩn từ DB bằng AsNoTracking
+                var productInDb = _context.Products.AsNoTracking().FirstOrDefault(p => p.ProductId == item.ProductId);
+                
+                if (productInDb != null)
                 {
-                    OrderId = order.OrderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    Price = item.Product.Price  
-                };
-                _context.OrderDetails.Add(detail);
+                    var detail = new OrderDetail
+                    {
+                        OrderId = order.OrderId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        Price = productInDb.Price  
+                    };
+                    _context.OrderDetails.Add(detail);
+
+                    // Bắn thẳng SQL UPDATE xuống MySQL (Xử lý luôn trường hợp reserved_stock bị NULL)
+                    _context.Database.ExecuteSqlInterpolated(
+                        $"UPDATE products SET reserved_stock = COALESCE(reserved_stock, 0) + {item.Quantity} WHERE product_id = {item.ProductId}"
+                    );
+                }
             }
+
+            // 4. GHI LOG LỊCH SỬ TRẠNG THÁI (ORDER STATUS HISTORY)
+            var statusHistory = new OrderStatusHistory
+            {
+                OrderId = order.OrderId,
+                Status = "PENDING",
+                ChangedAt = DateTime.Now,
+                ChangedBy = currentUserId,
+                Notes = "The customer has successfully placed an order."
+            };
+            _context.OrderStatusHistories.Add(statusHistory);
+
+            // Lưu OrderDetails và StatusHistory vào DB
             _context.SaveChanges(); 
 
+            // 5. Dọn dẹp giỏ hàng Session
             HttpContext.Session.Remove("cart");
             TempData["OrderSuccess"] = "Placed success! Thank for buying.";
 

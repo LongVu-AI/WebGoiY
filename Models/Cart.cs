@@ -3,35 +3,35 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebGoiY.Models
 {
-    [Table("carts")] // Đặt tên bảng trong SQL là Carts
+    [Table("carts")]
     public class Cart
     {
         [Key]
-        public int Id { get; set; } // Khóa chính tự tăng
+        [Column("id")]
+        public int Id { get; set; }
 
         [Required]
-        public int UserId { get; set; } // Khóa ngoại liên kết với bảng User
+        [Column("user_id")]
+        public int UserId { get; set; }
 
         [Required]
-        public required string ProductId { get; set; } // Khóa ngoại liên kết với bảng Product
+        [Column("product_id")]
+        public required string ProductId { get; set; }
 
         [Required]
-        public int Quantity { get; set; } // Số lượng sản phẩm mua
+        [Column("quantity")]
+        public int Quantity { get; set; }
 
-        // --- NAVIGATIONAL PROPERTIES (Liên kết bảng) ---
-        // EF Core sẽ tự động dựa vào ProductId để bốc trọn bộ thông tin: 
-        // ProductName, Price, ImagePath từ bảng Product qua đây mà không cần khai báo lại.
+        // --- NAVIGATIONAL PROPERTIES ---
         [ForeignKey("ProductId")]
         public virtual required Product Product { get; set; }
 
-         
-        // Tính tổng tiền của riêng món này (Đơn giá x Số lượng)
-        [NotMapped] // Khai báo cho EF Core biết thuộc tính này chỉ tính toán, không tạo cột trong DB
+        // Thành tiền = Đơn giá x Số lượng
+        [NotMapped]
         public decimal Amount 
         {
             get 
             {
-                // Ép kiểu Price về double nếu trong DB bạn đang để kiểu decimal
                 return (Product?.Price ?? 0) * Quantity;
             }
         }

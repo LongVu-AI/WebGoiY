@@ -58,29 +58,23 @@
                                                 
                                                 <!-- BỔ SUNG: Hiển thị cảnh báo số lượng tồn kho còn lại -->
                                                 <div class="mt-1" style="font-size: 11px;">
-<<<<<<< HEAD
-                                                    @if (item.Product.PhysicalStock <= 5 && item.Product.PhysicalStock > 0)
-                                                    {
-                                                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Only @item.Product.PhysicalStock left!</span>
+                                                    @{
+                                                        // Tính toán số lượng khả dụng
+                                                        int physical = item.Product.PhysicalStock ?? 0;
+                                                        int reserved = item.Product.ReservedStock ?? 0;
+                                                        int availableStock = physical - reserved;
                                                     }
-                                                    else if (item.Product.PhysicalStock == 0)
-=======
-                                                    @if (item.Product.stock_quantity <= 5 && item.Product.stock_quantity > 0)
+                                                    @if (availableStock <= 5 && availableStock > 0)
                                                     {
-                                                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Only @item.Product.stock_quantity left!</span>
+                                                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Only @availableStock left!</span>
                                                     }
-                                                    else if (item.Product.stock_quantity == 0)
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
+                                                    else if (availableStock == 0)
                                                     {
                                                         <span class="text-danger fw-bold"><i class="fa-solid fa-circle-xmark"></i> Out of stock</span>
                                                     }
                                                     else
                                                     {
-<<<<<<< HEAD
-                                                        <span class="text-muted"><i class="fa-solid fa-box-open"></i> Available: @item.Product.PhysicalStock</span>
-=======
-                                                        <span class="text-muted"><i class="fa-solid fa-box-open"></i> Available: @item.Product.stock_quantity</span>
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
+                                                        <span class="text-muted"><i class="fa-solid fa-box-open"></i> Available: @availableStock</span>
                                                     }
                                                 </div>
                                             </div>
@@ -92,19 +86,11 @@
                                     <td class="text-center">
                                         <div class="d-flex align-items-center justify-content-center">
                                             <div class="input-group input-group-sm" style="max-width: 100px;">
-<<<<<<< HEAD
                                                 <!-- Thêm thuộc tính max để giới hạn ngay trên giao diện -->
                                                 <input type="number" 
                                                     value="@item.Quantity" 
                                                     min="1" 
-                                                    max="@item.Product.PhysicalStock" 
-=======
-                                                <!-- 🛠️ ĐÃ SỬA: Thêm thuộc tính max để giới hạn ngay trên giao diện -->
-                                                <input type="number" 
-                                                    value="@item.Quantity" 
-                                                    min="1" 
-                                                    max="@item.Product.stock_quantity" 
->>>>>>> 1ecd8bf952ba0836e62f87b523e1c321d425335b
+                                                    max="@((item.Product.PhysicalStock ?? 0) - (item.Product.ReservedStock ?? 0) )"
                                                     onchange="handleUpdateQuantityAsync('@item.ProductId', this.value, this)" 
                                                     class="form-control text-center fw-bold border-secondary-subtle">
                                             </div>
