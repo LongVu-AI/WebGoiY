@@ -35,10 +35,21 @@
             <!-- KHỐI XỬ LÝ ĐĂNG NHẬP / DROPDOWN TÀI KHOẢN -->
             @if (loggedInUser == null)
             {
-                <!-- CHƯA ĐĂNG NHẬP: Hiện nút Login chuẩn -->
-                <a href="/login" class="text-white text-decoration-none fw-bold">
-                    <i class="fa-solid fa-user"></i> Login
-                </a>
+                <!-- CHƯA ĐĂNG NHẬP: Hiện nút Login / Register -->
+                <div class="d-inline-flex align-items-center">
+                    <!-- Nút Login: dùng d-inline-flex để gom icon + chữ căn giữa chuẩn đét -->
+                    <a href="/login" class="text-white text-decoration-none fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-right-to-bracket me-1 small"></i><span>Login</span>
+                    </a>
+
+                    <!-- Dấu phân cách: cố định khoảng cách 2 bên mx-1 hoặc mx-2 -->
+                    <span class="text-white-50 mx-2" style="font-size: 13px;">|</span>
+
+                    <!-- Nút Register: thẻ span để đồng bộ cấu trúc với Login -->
+                    <a href="/register" class="text-white text-decoration-none fw-bold d-inline-flex align-items-center">
+                        <span>Register</span>
+                    </a>
+                </div>
             }
             else
             {

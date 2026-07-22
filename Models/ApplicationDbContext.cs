@@ -31,7 +31,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
-
+    public virtual DbSet<Review> Reviews { get; set; }
+    public DbSet<ReviewImage> ReviewImages { get; set; }
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -296,6 +297,44 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("products_ibfk_1");
+        });
+        
+        modelBuilder.Entity<Review>(entity =>
+        {
+            // 1. Ánh xạ tên bảng
+            entity.ToTable("reviews");
+
+            // 2. Khóa chính
+            entity.HasKey(e => e.ReviewId);
+
+            // 3. Ánh xạ các cột MySQL snake_case
+            entity.Property(e => e.ReviewId).HasColumnName("review_id");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.IsVisible).HasColumnName("is_visible");
+            entity.Property(e => e.AdminReply).HasColumnName("admin_reply");
+
+            // 4. Khóa ngoại: Review -> Product (Một sản phẩm có nhiều Review)
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            // 5. Khóa ngoại: Review -> User (Một User có nhiều Review)
+            entity.HasOne(d => d.User)
+                .WithMany(u => u.Reviews)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+        modelBuilder.Entity<ReviewImage>(entity =>
+        {
+            entity.HasOne(ri => ri.Review)
+                  .WithMany(r => r.ReviewImages)
+                  .HasForeignKey(ri => ri.ReviewId)
+                  .OnDelete(DeleteBehavior.Cascade); // Xóa Review thì tự động xóa sạch ảnh của Review đó
         });
 
         modelBuilder.Entity<Supplier>(entity =>

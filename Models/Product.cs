@@ -43,6 +43,7 @@ public partial class Product
     public virtual Category? Category { get; set; }
 
     public virtual ICollection<ImportOrderDetail> ImportOrderDetails { get; set; } = new List<ImportOrderDetail>();
-
+    // Thêm tập hợp các đánh giá của sản phẩm này
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 }

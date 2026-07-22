@@ -34,6 +34,6 @@ public partial class User
     public string? Role { get; set; }
 
     public virtual ICollection<OrderStatusHistory> OrderStatusHistories { get; set; } = new List<OrderStatusHistory>();
-
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }

@@ -31,7 +31,101 @@
         // 5. Chuyển trang
         window.location.href = url;
     }
- 
+
+document.addEventListener('DOMContentLoaded', function () {
+    const MAX_IMAGES = 3;
+    let dataTransfer = new DataTransfer();
+
+    // 1. Bắt sự kiện Click trực tiếp vào khung Add Image
+    document.addEventListener('click', function (e) {
+        const btnAdd = e.target.closest('#btnAddImage');
+        if (btnAdd) {
+            const fileInput = document.getElementById('reviewImagesInput');
+            if (fileInput) {
+                // Reset value về rỗng để luôn kích hoạt sự kiện change kể cả khi chọn lại file cũ
+                fileInput.value = ''; 
+                fileInput.click();
+            }
+        }
+    });
+
+    // 2. Lắng nghe sự kiện chọn File
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'reviewImagesInput') {
+            const fileInput = e.target;
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const btnAddImage = document.getElementById('btnAddImage');
+
+            if (!fileInput.files || fileInput.files.length === 0) return;
+
+            const files = Array.from(fileInput.files);
+
+            files.forEach(file => {
+                // Kiểm tra nếu chưa đủ 3 ảnh thì mới thêm
+                if (dataTransfer.items.length < MAX_IMAGES) {
+                    dataTransfer.items.add(file);
+
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const item = document.createElement('div');
+                        item.className = 'image-preview-item';
+                        item.innerHTML = `
+                            <img src="${event.target.result}" alt="Preview" />
+                            <span class="btn-remove-image">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        `;
+
+                        // Sự kiện xóa ảnh khi bấm nút X
+                        item.querySelector('.btn-remove-image').addEventListener('click', function (ev) {
+                            ev.stopPropagation(); // Tránh bị click lan sang khung khác
+                            removeImage(file.name, item, fileInput, btnAddImage);
+                        });
+
+                        if (previewContainer) {
+                            previewContainer.appendChild(item);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Gán lại danh sách file vào Input để gửi lên Controller
+            fileInput.files = dataTransfer.files;
+
+            // Kiểm tra ẩn/hiện nút Add Image
+            checkMaxImages(btnAddImage);
+        }
+    });
+
+    // Hàm xóa ảnh
+    function removeImage(fileName, itemElement, fileInput, btnAddImage) {
+        const newDt = new DataTransfer();
+
+        for (let i = 0; i < dataTransfer.files.length; i++) {
+            const file = dataTransfer.files[i];
+            if (file.name !== fileName) {
+                newDt.items.add(file);
+            }
+        }
+
+        dataTransfer = newDt;
+        fileInput.files = dataTransfer.files;
+        itemElement.remove();
+
+        checkMaxImages(btnAddImage);
+    }
+
+    // Hàm ẩn nút khi đủ 3 ảnh
+    function checkMaxImages(btnAddImage) {
+        if (!btnAddImage) return;
+        if (dataTransfer.items.length >= MAX_IMAGES) {
+            btnAddImage.style.display = 'none';
+        } else {
+            btnAddImage.style.display = 'flex';
+        }
+    }
+});
 
 // Hàm trung gian bốc thuộc tính data-id từ nút bấm ngoài HTML
 function handleAddToCartWithDataAttr(buttonComponent) {

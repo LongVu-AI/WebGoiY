@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebGoiY.Enum;
 using WebGoiY.Helpers;
 using WebGoiY.Models;
 
@@ -85,7 +86,7 @@ namespace WebGoiY.Controllers
                 OrderNotes = model.OrderNotes,
                 PaymentMethod = model.PaymentMethod,
                 OrderDate = DateTime.Now,  
-                Status = "PENDING",       
+                Status = OrderStatus.PENDING.ToString(),       
                 SubtotalPrice = model.SubtotalPrice,
                 DiscountAmount = model.DiscountAmount,
                 TaxAmount = model.TaxAmount,

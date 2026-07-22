@@ -51,6 +51,8 @@ namespace WebGoiY.Controllers
         }
          // [GET] Hiển thị giao diện trang Đăng Ký
         [HttpGet]
+        [Route("Auth/Register")]
+        [Route("register")]
         public IActionResult Register()
         {
             return View();

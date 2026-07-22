@@ -38,6 +38,7 @@ namespace WebGoiY.Controllers
             List<Product> products = _context.Products
                                              .Where(p => p.IsHot ==1 && p.IsActive == 1)
                                              .ToPageList(page, _pageSize, out int totalPages);
+            ViewBag.Categories = _context.Categories.ToList();
             return View(products);
         }
 
@@ -94,14 +95,16 @@ namespace WebGoiY.Controllers
             {
                 return NotFound(); // trả về trang 404 nếu ko có id
             }   
-
+           
             // 1. Lấy thông tin chi tiết sản phẩm hiện tại (Chỉ lấy sản phẩm đang hoạt động)
             var productDetail = _context.Products
                                         .Include(p => p.Category)
+                                        .Include(p => p.Reviews.Where(r => r.IsVisible == 1))// Chỉ lấy review đang HIỆN
+                                            .ThenInclude(r => r.User)   //  Lấy thông tin User để hiển thị Tên người review
                                         .FirstOrDefault(p => p.ProductId == ID && p.IsActive == 1);
 
             if (productDetail == null) return NotFound();
-
+             
             // 2. KHỐI 1: Lấy 12 sản phẩm tương tự CÙNG DANH MỤC (Lọc IsActive và ưu tiên còn hàng)
             List<Product> similarProducts = _context.Products
                 .Where(p => p.CategoryId == productDetail.CategoryId 
@@ -160,12 +163,16 @@ namespace WebGoiY.Controllers
                 .GroupBy(x => x.index / 4)
                 .Select(g => g.Select(x => x.prod).ToList())
                 .ToList();
-
+            
             ViewBag.FinalRecommendations = finalRecommendations;
             
+            ViewBag.Reviews = productDetail.Reviews
+                .OrderByDescending(r=>r.CreatedAt)
+                .ToList();
             return View(productDetail);
         }
-        
+
+      
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

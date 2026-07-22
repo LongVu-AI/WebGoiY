@@ -1,50 +1,79 @@
-@model WebGoiY.Models.Product // bỏ iEnumerable đi vì chỉ lấy 1 sp 
+@model WebGoiY.Models.Product
 
-@if(Model != null ){
-<div class="container mt-4">
-    <div class="row bg-white p-4 rounded shadow-sm border">
+@{
+    // 1. Hứng danh sách review đã lọc IsVisible = 1 từ Controller
+    var reviews = ViewBag.Reviews as List<WebGoiY.Models.Review> ?? new List<WebGoiY.Models.Review>();
+
+    // 2. Tính toán điểm sao trung bình động
+    double avgRating = reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 5.0;
+    int fullStars = (int)Math.Floor(avgRating);
+    bool hasHalfStar = (avgRating - fullStars) >= 0.5;
+
+    // 3. Tính toán tồn kho
+    int physical = Model?.PhysicalStock ?? 0;
+    int reserved = Model?.ReservedStock ?? 0;
+    int availableStock = physical - reserved;
+}
+
+@if (Model != null)
+{
+<div class="container mt-4 mb-5">
+    <!-- 1. KHỐI THÔNG TIN CHI TIẾT SẢN PHẨM -->
+    <div class="row bg-white p-4 rounded-3 shadow-sm border">
+        <!-- Ảnh sản phẩm -->
         <div class="col-md-5 mb-4 mb-md-0">
-            <div class="position-relative overflow-hidden rounded bg-light border" style="aspect-ratio: 1/1;">
+            <div class="position-relative overflow-hidden rounded-3 bg-light border p-card-hover" style="aspect-ratio: 1/1;">
                 <img src="@(!string.IsNullOrEmpty(Model.ImagePath) ? Model.ImagePath : "https://placehold.co/600x600/e9ecef/495057?text=No+Image")"
-                     class="img-fluid w-100 h-100 object-fit-cover" alt="Main Product Image">
+                     class="img-fluid w-100 h-100 object-fit-cover" alt="@Model.ProductName">
             </div>
         </div>
 
+        <!-- Thông tin sản phẩm & Nút mua -->
         <div class="col-md-7 ps-md-5 d-flex flex-column">
             <div class="mb-auto">
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb small">
-                        <li class="breadcrumb-item"><a href="/Product" class="text-decoration-none text-muted">Home</a></li>
+                    <ol class="breadcrumb small mb-2">
+                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Home</a></li>
                         <li class="breadcrumb-item"><a href="/Product/ShowShopPage" class="text-decoration-none text-muted">Shop</a></li>
                         <li class="breadcrumb-item active text-brand fw-bold">
-                            <a href="/Product/ShowShopPage?categoryId=@Model.CategoryId" class="text-decoration-none text-muted">@Model.Category?.CategoryName</a></li>
+                            <a href="/Product/ShowShopPage?categoryId=@Model.CategoryId" class="text-decoration-none text-brand">@Model.Category?.CategoryName</a>
+                        </li>
                     </ol>
                 </nav>
 
                 <h2 class="fw-bold text-dark mb-2">@Model.ProductName</h2>
-                
-                <!-- PHẦN ĐÃ SỬA: Thêm hiển thị Đã bán & Tồn kho -->
-                <div class="d-flex align-items-center mb-3">
-                    <div class="text-warning small me-2">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                    </div>
-                    <span class="text-muted small border-start ps-2 me-3">@Model.Sold Sold</span>
-                    
-                
-                    <!-- Hiển thị số lượng tồn kho chuẩn nghiệp vụ kho kép -->
-                    <span class="text-muted small border-start ps-2">
-                        @{
-                            // Tính toán số lượng thực tế có thể bán ngay trên giao diện
-                            int physical = Model.PhysicalStock ?? 0;
-                            int reserved = Model.ReservedStock ?? 0;
-                            int availableStock = physical - reserved;
-                        }
 
+                <!-- Đánh giá sao động, Đã bán & Tồn kho -->
+                <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex align-items-center bg-light px-2 py-1 rounded">
+                        <span class="fw-bold text-dark me-1 border-bottom border-brand border-2">@avgRating</span>
+                        <div class="text-warning small me-1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= fullStars)
+                                {
+                                    <i class="fa-solid fa-star"></i>
+                                }
+                                else if (i == fullStars + 1 && hasHalfStar)
+                                {
+                                    <i class="fa-solid fa-star-half-stroke"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-regular fa-star text-muted opacity-50"></i>
+                                }
+                            }
+                        </div>
+                        <span class="text-muted small">(@reviews.Count reviews)</span>
+                    </div>
+
+                    <span class="text-muted small border-start ps-2">@Model.Sold Sold</span>
+
+                    <span class="text-muted small border-start ps-2">
                         @if (availableStock > 0)
                         {
-                            <span>
-                                <i class="fa-solid fa-boxes-stacked me-1 text-secondary"></i> 
-                                @availableStock items available
+                            <span class="text-success fw-semibold">
+                                <i class="fa-solid fa-boxes-stacked me-1"></i> @availableStock items available
                             </span>
                         }
                         else
@@ -56,35 +85,37 @@
                     </span>
                 </div>
 
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <h1 class="text-brand fw-bold mb-0" >@(Model.Price.ToString("N2")) £</h1>
-                    <span class="text-muted small">Tax included. Shipping calculated at checkout.</span>
+                <!-- Khung Giá Bán -->
+                <div class="bg-light p-3 rounded-3 mb-4 border-start border-4 border-brand">
+                    <h1 class="text-brand fw-bold mb-0">@(Model.Price.ToString("N2")) £</h1>
+                    <span class="text-muted small"> Tax included. Shipping calculated at checkout.</span>
                 </div>
 
+                <!-- Mô Tả Sản Phẩm -->
                 <div class="mb-4">
-                    <h6 class="fw-bold text-dark">Product Description</h6>
-                    <p class="text-secondary small lh-lg">
-                         This item is a premium part of our retail collection. Identified by AI analysis as a high-demand product in the 
-                         <span class="fw-bold">@Model.Category?.CategoryName</span> category.
+                    <h6 class="fw-bold text-dark mb-2">Product Description</h6>
+                    <p class="text-secondary small lh-lg mb-0">
+                        This item is a premium part of our retail collection. Identified by AI analysis as a high-demand product in the 
+                        <span class="fw-bold text-dark">@Model.Category?.CategoryName</span> category.
                         Authentic design and quality materials for long-lasting use.
                     </p>
                 </div>
             </div>
 
-            <!-- PHẦN ĐÃ SỬA: Ẩn nút mua hàng hoặc báo hết hàng nếu tồn kho bằng 0 -->
-            <div class="row g-2">
+            <!-- Nút Mua Hàng -->
+            <div class="row g-2 mt-3">
                 @if (availableStock > 0)
                 {
                     <div class="col-6">
-                         <button class="btn btn-outline-dark btn-lg w-100 py-3 fw-bold"
-                                 data-id="@Model.ProductId"
-                                 onclick="handleAddToCartWithDataAttr(this)"
-                                 style="font-size: 15px;">
-                            <i class="fa-solid fa-cart-plus me-2"></i> ADD TO CART
+                        <button class="btn btn-outline-dark btn-lg w-100 py-3 fw-bold transition-all"
+                                data-id="@Model.ProductId"
+                                onclick="handleAddToCartWithDataAttr(this)"
+                                style="font-size: 14px; border-radius: 8px;">
+                            <i class="fa-solid fa-cart-plus me-2 text-brand"></i> ADD TO CART
                         </button>
                     </div>
                     <div class="col-6">
-                        <a href="/Product/AddToCart?id=@Model.ProductId" class="btn btn-dark btn-lg w-100 py-3 fw-bold d-block text-center text-decoration-none" style="font-size: 15px; line-height: 24px;">
+                        <a href="/cart/add?productId=@Model.ProductId" class="btn btn-brand btn-lg w-100 py-3 fw-bold d-block text-center text-decoration-none transition-all shadow-sm" style="font-size: 14px; border-radius: 8px; line-height: 24px;">
                             BUY NOW
                         </a>
                     </div>
@@ -92,7 +123,7 @@
                 else
                 {
                     <div class="col-12">
-                        <button class="btn btn-secondary btn-lg w-100 py-3 fw-bold" disabled style="font-size: 15px;">
+                        <button class="btn btn-secondary btn-lg w-100 py-3 fw-bold" disabled style="font-size: 14px; border-radius: 8px;">
                             <i class="fa-solid fa-circle-xmark me-2"></i> OUT OF STOCK
                         </button>
                     </div>
@@ -101,7 +132,172 @@
         </div>
     </div>
 
-    <!-- 2. KHỐI SẢN PHẨM TƯƠNG TỰ (CAROUSEL) -->
+    <!-- 2. KHỐI ĐÁNH GIÁ & BÌNH LUẬN (REVIEWS SECTION) -->
+    <div class="row bg-white p-4 rounded-3 shadow-sm border mt-4">
+        <div class="col-12">
+            <h5 class="fw-bold text-dark text-uppercase mb-3 d-flex align-items-center">
+                <i class="fa-solid fa-comments text-brand me-2"></i> Customer Reviews & Ratings
+            </h5>
+            <hr class="opacity-10 mb-4">
+        </div>
+
+        <!-- Tổng quan điểm số -->
+        <div class="col-md-4 mb-4 mb-md-0">
+            <div class="rating-overview-box p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center">
+                <h1 class="display-3 fw-bold text-brand mb-0">@avgRating</h1>
+                <div class="text-warning fs-5 my-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= fullStars) { <i class="fa-solid fa-star"></i> }
+                        else if (i == fullStars + 1 && hasHalfStar) { <i class="fa-solid fa-star-half-stroke"></i> }
+                        else { <i class="fa-regular fa-star text-muted opacity-50"></i> }
+                    }
+                </div>
+                <p class="text-muted small mb-0">Based on <strong>@reviews.Count</strong> verified reviews</p>
+            </div>
+        </div>
+
+        <!-- Form gửi Đánh giá mới -->
+        <div class="col-md-8">
+            <div class="bg-light p-3 p-md-4 rounded-3 border">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-pen-to-square me-1 text-brand"></i> Write a Review</h6>
+                
+                <!-- Thông báo TempData -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show small py-2" role="alert">
+                        <i class="fa-solid fa-circle-check me-1"></i> @TempData["Success"]
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show small py-2" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> @TempData["Error"]
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <!--  SỬA ACTION VÀ THÊM ENCTYPE LƯU FILE -->
+                <form action="/Replay/PostReview" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="ProductID" value="@Model.ProductId" />
+                    
+                    <div class="mb-3 d-flex align-items-center gap-3">
+                        <label class="form-label small fw-bold mb-0 text-secondary">Your Rating:</label>
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="Rating" value="5" checked /><label for="star5" title="5 stars"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="4 stars"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="3 stars"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="2 stars"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="1 star"><i class="fa-solid fa-star"></i></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <textarea name="Comment" class="form-control border-0 shadow-sm" rows="3" placeholder="Share your experience with this product..." required style="border-radius: 8px; font-size: 14px;"></textarea>
+                    </div>
+
+                    <!-- KHỐI CHỌN ẢNH ĐÁNH GIÁ (MAX 3 ẢNH) -->
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary fw-semibold mb-1">
+                            <i class="fa-solid fa-camera me-1"></i> Attach Images (Max 3):
+                        </label>
+
+                        <!-- Thẻ input chọn file thực tế (được ẩn đi) -->
+                        <input type="file" id="reviewImagesInput" name="reviewImages" class="d-none" multiple accept="image/*" />
+
+                        <div class="image-upload-wrapper">
+                            <!-- Vùng chứa các hình ảnh preview khi chọn -->
+                            <div id="imagePreviewContainer" class="d-flex gap-3 flex-wrap"></div>
+
+                            <!-- Nút bấm giả để kích hoạt chọn file -->
+                            <div id="btnAddImage" class="btn-add-image">
+                                <i class="fa-solid fa-camera-retro fs-5 mb-1"></i>
+                                <span style="font-size: 11px; font-weight: 600;">Add Image</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- SUBMIT: -->
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-brand fw-bold px-4 py-2" style="border-radius: 6px; font-size: 13px;">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Review
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh sách các Đánh giá đã gửi -->
+        <div class="col-12 mt-4 pt-3 border-top">
+            @if (reviews.Any())
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var rev in reviews)
+                    {
+                        <div class="review-item p-3 rounded-3 border bg-white shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-circle">
+                                        @((rev.User?.FullName ?? rev.User?.Username ?? "U").Substring(0, 1).ToUpper())
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-dark small">@(rev.User?.FullName ?? rev.User?.Username)</h6>
+                                        <small class="text-muted" style="font-size: 11px;">
+                                            <i class="fa-regular fa-clock me-1"></i>@rev.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="text-warning small">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="@(i <= rev.Rating ? "fa-solid" : "fa-regular text-muted opacity-50") fa-star"></i>
+                                    }
+                                </div>
+                            </div>
+
+                            <p class="text-secondary small mb-2 ps-5 ms-2 lh-base">
+                                @rev.Comment
+                            </p>
+
+                            <!--  HIỂN THỊ DANH SÁCH ẢNH REVIEW (NẾU CÓ) -->
+                            @if (rev.ReviewImages != null && rev.ReviewImages.Any())
+                            {
+                                <div class="d-flex gap-2 ps-5 ms-2 mb-2 flex-wrap">
+                                    @foreach (var img in rev.ReviewImages)
+                                    {
+                                        <a href="@img.ImagePath" target="_blank" class="d-block border rounded overflow-hidden shadow-sm" style="width: 70px; height: 70px;">
+                                            <img src="@img.ImagePath" class="w-100 h-100 object-fit-cover hover-up" alt="Review Image" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Phản hồi của Admin (nếu có) -->
+                            @if (!string.IsNullOrEmpty(rev.AdminReply))
+                            {
+                                <div class="bg-light p-3 mt-2 rounded-3 border-start border-3 border-brand ms-5 ms-2">
+                                    <div class="d-flex align-items-center gap-1 mb-1">
+                                        <i class="fa-solid fa-user-shield text-brand small"></i>
+                                        <strong class="text-brand small">Response from Store</strong>
+                                    </div>
+                                    <p class="mb-0 text-dark small lh-base">@rev.AdminReply</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="fa-regular fa-comments fs-1 mb-2 text-secondary opacity-50"></i>
+                    <p class="mb-0 small">No reviews yet. Be the first to review this product!</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 3. KHỐI SẢN PHẨM TƯƠNG TỰ (CAROUSEL) -->
     @{
         var chunks = ViewBag.SimilarProductChunks as List<List<WebGoiY.Models.Product>>;
         int chunkIndex = 0;
@@ -124,7 +320,7 @@
                             @foreach(var sim in chunk){
                                 <div class="col-6 col-md-3">
                                     <a href="/Product/Detail?id=@sim.ProductId" class="text-decoration-none h-100 d-block">
-                                        <div class="card h-100 shadow-sm border-0 product-card transition-all">
+                                        <div class="card h-100 shadow-sm border-0 product-card">
                                             <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
                                                 <img src="@(!string.IsNullOrEmpty(sim.ImagePath) ? sim.ImagePath : "https://placehold.co/300x300/e9ecef/495057?text=Product")"
                                                      class="card-img-top w-100 h-100 object-fit-cover" alt="Similar Item">
@@ -143,17 +339,17 @@
                 }
             </div>
 
-            <button class="carousel-control-prev" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="prev" style="width: 5%; left: -50px;">
-                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 40px; height: 40px;"><i class="fa-solid fa-chevron-left"></i></span>
+            <button class="carousel-control-prev" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="prev" style="width: 5%; left: -30px;">
+                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 38px; height: 38px;"><i class="fa-solid fa-chevron-left small"></i></span>
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="next" style="width: 5%; right: -50px;">
-                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 40px; height: 40px;"><i class="fa-solid fa-chevron-right"></i></span>
+            <button class="carousel-control-next" type="button" data-bs-target="#similarProductsCarousel" data-bs-slide="next" style="width: 5%; right: -30px;">
+                <span class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 38px; height: 38px;"><i class="fa-solid fa-chevron-right small"></i></span>
             </button>
         </div>
     </div>
     }
 
-    <!-- 3. KHỐI RECOMMENDED FOR YOU -->
+    <!-- 4. KHỐI RECOMMENDED FOR YOU -->
     @{
         var recommendations = ViewBag.FinalRecommendations as List<WebGoiY.Models.Product>;
     }
@@ -166,15 +362,15 @@
                 <i class="fa-solid fa-wand-magic-sparkles text-brand fs-4"></i>
                 <h4 class="fw-bold text-dark m-0">Recommended For You</h4>
             </div>
-            <p class="text-muted small">Personalized product bundles dynamically generated by AI Association Rule Mining and Trending Items</p>
+            <p class="text-muted small mb-0">Personalized product bundles dynamically generated by AI Association Rule Mining and Trending Items</p>
         </div>
 
         <div class="col-12">
-            <div class="d-flex flex-nowrap gap-3 pb-3" style="overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-left: 2px; padding-right: 2px;">
+            <div class="d-flex flex-nowrap gap-3 pb-3" style="overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
                 @foreach(var rec in recommendations){
-                <div class="flex-shrink-0" style="width: 280px;">
+                <div class="flex-shrink-0" style="width: 260px;">
                     <a href="/Product/Detail?id=@rec.ProductId" class="text-decoration-none h-100 d-block">
-                        <div class="card h-100 shadow-sm border-0 product-card transition-all bg-white">
+                        <div class="card h-100 shadow-sm border-0 product-card bg-white">
                             <div class="position-relative overflow-hidden bg-light" style="aspect-ratio: 1/1;">
                                 <img src="@(!string.IsNullOrEmpty(rec.ImagePath) ? rec.ImagePath : "https://placehold.co/300x300/e9ecef/495057?text=AI+Choice")"
                                      class="card-img-top w-100 h-100 object-fit-cover" alt="Recommended Item">
